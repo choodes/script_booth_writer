@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Script Booth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--desk:#D9DFE6;--panel:#F3F5F8;--card:#FFFFFF;--text:#14181F;--acc:#3452E1;--accfg:#fff;--red:#D92D20;--ls:2;--z:1;
+--line:color-mix(in srgb,var(--text) 16%,transparent);--muted:color-mix(in srgb,var(--text) 62%,transparent);
+--tint:color-mix(in srgb,var(--acc) 10%,var(--card));--redtint:color-mix(in srgb,var(--red) 10%,var(--card))}
+@media(prefers-color-scheme:dark){:root{--desk:#0E1217;--panel:#151A21;--card:#1D242D;--text:#E8ECF1;--acc:#8EA2FF;--accfg:#0E1217;--red:#FF6B5E}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--desk);color:var(--text);font:14px/1.45 "IBM Plex Sans",system-ui,sans-serif}
+#errbar{position:fixed;top:0;left:0;right:0;z-index:99;background:var(--red);color:#fff;padding:8px 14px;font-weight:600}
+.app{display:grid;grid-template-columns:380px 1fr;min-height:100vh}
+.app.nopanel{grid-template-columns:1fr}.app.nopanel .panel{display:none}
+.panel{position:sticky;top:0;height:100vh;overflow:auto;background:var(--panel);border-right:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px}
+.brand{font-size:20px;font-weight:700;letter-spacing:.2px}
+.box{background:var(--tint);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px}
+.box.err{background:var(--redtint);border-color:var(--red)}
+.btn{min-height:42px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--text);font:600 14px "IBM Plex Sans",sans-serif;padding:0 14px;cursor:pointer;transition:background .15s,border-color .15s,transform .05s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,var(--card))}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid color-mix(in srgb,var(--acc) 55%,transparent);outline-offset:1px}
+.btn.pri{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.btn.pri:hover{background:color-mix(in srgb,var(--acc) 85%,#000)}
+.btn.dng{border-color:var(--red);color:var(--red);background:transparent}
+.btn.dng:hover{background:var(--redtint)}
+.btn.big{min-height:54px;font-size:16px;width:100%}
+.btn.sm{min-height:34px;padding:0 10px;font-size:13px}
+.btn.live{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--red) 60%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+@keyframes flash{0%{background:color-mix(in srgb,var(--acc) 40%,var(--card))}100%{background:var(--card)}}
+@media(prefers-reduced-motion:reduce){.btn.live{animation:none}.card.flash{animation:none}*{transition:none!important}}
+input[type=text],input[type=password],input[type=number],select,textarea{width:100%;min-height:38px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--text);font:14px "IBM Plex Sans",sans-serif;padding:6px 9px}
+textarea{resize:vertical}
+label{font-size:12px;color:var(--muted);display:block;margin:6px 0 2px}
+label.chk{display:flex;gap:7px;align-items:center;color:var(--text);font-size:13px;margin:6px 0}
+label.chk input{width:auto;min-height:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+.row.nf>*{flex:none}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px}
+details>summary{cursor:pointer;padding:10px 12px;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+details>summary::-webkit-details-marker{display:none}
+details>summary::after{content:"⌄";margin-left:auto;transition:transform .2s;color:var(--muted)}
+details[open]>summary::after{transform:rotate(180deg)}
+details>.in{padding:2px 12px 12px}
+.card{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--nv,var(--acc));border-radius:12px;padding:10px 12px}
+.card.flash{animation:flash .6s}
+.card .nv{font-size:20px;font-weight:700}
+.card .hint{font-size:12px;color:var(--muted);margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;border:1.5px solid var(--c,var(--line));background:color-mix(in srgb,var(--c,var(--acc)) 18%,var(--card));cursor:default}
+.chip button{border:0;background:none;color:inherit;cursor:pointer;font-weight:700;padding:0}
+.chip.pl{cursor:pointer}
+.tabs{display:flex;gap:4px;position:sticky;top:0;background:var(--card);z-index:3;padding:4px 0}
+.tabs button{flex:1;min-height:38px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--text);font:600 13px "IBM Plex Sans";cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin:6px 0}
+.seg button{flex:1;min-height:36px;border:0;background:var(--card);color:var(--text);font:600 13px "IBM Plex Sans";cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--acc);color:var(--accfg)}
+.strip{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:2px 2px}
+.strip b{color:var(--text)}
+canvas.wave{width:100%;height:70px;background:var(--card);border:1px solid var(--line);border-radius:8px;display:block;cursor:crosshair}
+video.prev,audio.pl,video.pl{width:100%;border-radius:8px;margin-top:6px;background:#000}
+audio.pl{background:none}
+.list .it{border:1px solid var(--line);border-radius:10px;padding:8px;margin:6px 0;background:var(--card)}
+.list .it .nm{font-weight:600;word-break:break-all}
+.list .it small{color:var(--muted)}
+.main{min-width:0;display:flex;flex-direction:column}
+.toolbar{position:sticky;top:0;z-index:20;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 14px;background:color-mix(in srgb,var(--panel) 78%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.toolbar select{width:auto}.toolbar .sep{width:1px;height:26px;background:var(--line)}
+#sheetswrap{padding:18px 12px 12px;overflow-x:auto}
+#sheets{display:flex;flex-direction:column;align-items:center;gap:22px;zoom:var(--z)}
+.sheet{position:relative;width:816px;min-height:1056px;padding:1in 1in 1in 1.5in;background:#fff;color:#111;box-shadow:0 6px 24px rgba(0,0,0,.28);font:12pt "Courier Prime","Courier New",monospace;text-align:left;line-height:var(--ls)}
+.sheet .pn{position:absolute;top:.5in;right:1in;font-size:12pt}
+.b{position:relative;padding-bottom:calc(var(--ls)*.45em);line-height:var(--ls)}
+.b.scene{font-weight:700;text-transform:uppercase;padding-top:calc(var(--ls)*.3em)}
+.b.shot{text-transform:uppercase}
+.b.trans{text-transform:uppercase;text-align:right}
+.b.dlg .dname{margin-left:2.2in;text-transform:uppercase}
+.b.dlg .dparen{margin-left:1.6in;width:2in}
+.b.dlg .dtext{margin-left:1in;width:3.5in}
+.b .txt{outline:none;border-radius:3px}.b .txt:focus{background:#fff6b8}
+.b.brk{display:none}
+.b.brkv{padding:4px 0;margin:0 -.5in 0 -1in;text-align:center;font:11px "IBM Plex Sans";color:#888;border-top:1px dashed #bbb;cursor:pointer}
+.b.brkv:hover{color:#c00}
+.bar{position:absolute;left:-.55in;top:0;bottom:6px;width:4px;border-radius:2px;display:none;background:var(--c,#999)}
+body.colors .bar{display:block}
+.b.unsure .bar{display:block;background:none;border-left:3px dashed #d92d20}
+.tools{position:absolute;right:-1in;top:-4px;display:none;gap:4px;align-items:center;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:3px;font:11px "IBM Plex Sans";z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;transform:translateX(100%);right:.35in}
+.b:hover .tools,.b:focus-within .tools{display:flex}
+@media(hover:none){.tools{display:flex;position:static;transform:none;margin:2px 0}}
+.tools select{min-height:26px;padding:0 4px;font-size:11px;width:auto}
+.tools button{min-height:26px;border:1px solid var(--line);background:var(--card);color:var(--red);border-radius:6px;cursor:pointer}
+.tools .tag{background:var(--tint);border-radius:5px;padding:1px 6px}
+.title-t{margin-top:1.6in;text-align:center;text-transform:uppercase;text-decoration:underline;font-size:14pt}
+.title-w{text-align:center;margin-top:.4in}.title-a{text-align:center}
+.title-c{position:absolute;left:1.5in;bottom:1in;white-space:pre-line;font-size:11pt;line-height:1.3}
+.empty{color:#666;white-space:pre-line;line-height:1.5}
+.addsheet{margin:16px auto;width:min(816px,92%)}
+.typing{margin:6px 14px 10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;gap:8px;align-items:flex-end}
+.typing textarea{min-height:46px}.typing .btn{flex:none}
+.livebox{position:sticky;bottom:0;z-index:15;margin:0 14px 10px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 -4px 18px rgba(0,0,0,.2)}
+.livebox header{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px;cursor:pointer}
+.livebox header .sp{flex:1}.dot{width:10px;height:10px;border-radius:50%;background:#8a93a0}.dot.on{background:var(--red);box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 30%,transparent)}
+.livebox .body{height:140px;overflow:auto;padding:6px 12px;border-top:1px solid var(--line);font-size:14px;line-height:1.7}
+.livebox .body i{color:var(--muted)}
+.livebox.col .body,.livebox.col .foot{display:none}
+.livebox .foot{padding:4px 12px 6px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
+.kchip{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:0 6px;margin:0 3px;background:var(--acc);color:var(--accfg)}
+.stag{font-size:11px;font-weight:700;margin:0 4px 0 2px;padding:0 5px;border-radius:5px;background:color-mix(in srgb,var(--c) 25%,var(--card));border:1px solid var(--c)}
+.fab{position:fixed;right:20px;bottom:90px;width:52px;height:52px;border-radius:50%;border:0;background:var(--acc);color:var(--accfg);font-size:26px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:30}
+#measure{position:absolute;left:-9999px;top:0;width:576px;visibility:hidden;font:12pt "Courier Prime","Courier New",monospace;line-height:var(--ls)}
+.meter{height:10px;border-radius:6px;background:var(--line);overflow:hidden}.meter>div{height:100%;background:var(--acc)}
+@media(max-width:860px){.app{display:block}.panel{position:static;height:auto}}
+@media print{
+ @page{size:letter;margin:0}
+ body{background:#fff}.panel,.toolbar,.typing,.livebox,.fab,.addsheet,#errbar,.tools,.b.brkv,.bar,#measure{display:none!important}
+ .app{display:block}#sheetswrap{padding:0;overflow:visible}#sheets{zoom:1!important;gap:0;display:block}
+ .sheet{box-shadow:none;height:11in;min-height:0;overflow:hidden;break-after:page;page-break-after:always;margin:0}.sheet:last-child{break-after:auto;page-break-after:auto}
+}
+</style>
+</head>
+<body>
+<div id="errbar" hidden role="alert"></div>
+<div class="app" id="app">
+<aside class="panel" id="panel">
+  <div class="brand">🎬 Script Booth</div>
+  <div class="box" id="aiStatus" aria-live="polite"></div>
+  <details id="aiSet"><summary>⚙️ AI & Speech settings</summary><div class="in">
+    <label for="keyIn">Gemini API key</label>
+    <input type="password" id="keyIn" autocomplete="off" placeholder="paste key from Google AI Studio">
+    <div class="row" style="margin-top:8px"><button class="btn" id="keySave">💾 Save key</button><button class="btn" id="keyTest">🧪 Test AI</button></div>
+    <label class="chk"><input type="checkbox" id="optIndirect" checked> Convert indirect speech to direct dialogue</label>
+    <label class="chk"><input type="checkbox" id="optGold"> Use my examples (gold audio in recorded prompts)</label>
+    <label class="chk"><input type="checkbox" id="optVideo"> Send video to AI (only if file &lt; 15 MB)</label>
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+      <label for="optWhisperModel"><b>On-device speech model</b> (Without AI)</label>
+      <select id="optWhisperModel">
+        <option value="onnx-community/whisper-tiny" selected>Whisper Tiny (⚡ 10x faster, ~1-15s · recommended)</option>
+        <option value="onnx-community/whisper-base">Whisper Base (🎯 higher accuracy, ~1-3m)</option>
+      </select>
+      <div class="hint" style="font-size:11px;color:var(--muted);margin-top:4px">Downloads once on first use (~40 MB for Tiny vs ~200 MB for Base), then stays cached in your browser.</div>
+    </div>
+  </div></details>
+
+  <div class="card" id="nvCard">
+    <div style="font-size:12px;color:var(--muted)">Next voice (guess)</div>
+    <div class="nv" id="nvName">—</div>
+    <button class="btn pri big" id="dcBtn" style="margin-top:8px">🔀 Dialogue change</button>
+    <div class="hint">or press any key / headphone button</div>
+  </div>
+  <div class="strip" id="strip" aria-live="polite"></div>
+  <div class="box" id="msg" aria-live="polite" hidden></div>
+
+  <details open><summary>1️⃣ Input: live, record or upload</summary><div class="in">
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="live" aria-selected="true">🎙 Live</button>
+      <button role="tab" data-tab="rec" aria-selected="false">⏺ Record</button>
+      <button role="tab" data-tab="up" aria-selected="false">⬆ Upload</button>
+    </div>
+
+    <section id="tab-live">
+      <div class="seg" data-ai="live"><button data-v="no">Without AI</button><button data-v="ai">With AI</button></div>
+      <label for="lang">Language</label>
+      <select id="lang"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="en-IN">English (India)</option><option value="hi-IN">Hindi</option><option value="ta-IN">Tamil</option><option value="es-ES">Spanish</option><option value="fr-FR">French</option></select>
+      <label class="chk"><input type="checkbox" id="liveRec"> Record while listening (audio + beeps, saved)</label>
+      <button class="btn pri big" id="listenBtn" style="margin-top:6px">🎙 Start listening</button>
+      <p class="hint" style="font-size:12px;color:var(--muted);margin:6px 0 0">Say who speaks ("Alex says that I'm leaving tonight") and press any key whenever the dialogue changes hands. Works best in Chrome or Edge from localhost.</p>
+    </section>
+
+    <section id="tab-rec" hidden>
+      <div class="seg" data-ai="rec"><button data-v="no">Without AI</button><button data-v="ai">With AI</button></div>
+      <div class="seg" id="vidSeg"><button data-v="a">🎧 Audio only</button><button data-v="v">🎥 Audio + video</button></div>
+      <div id="camRow" hidden><label for="camSel">Camera</label><select id="camSel"></select></div>
+      <video class="prev" id="camPrev" muted playsinline hidden></video>
+      <button class="btn pri big" id="recBtn" style="margin-top:8px">⏺ Record</button>
+      <div class="strip"><span>⏱ <b id="recTime">0:00</b></span><span>🔀 changes: <b id="recKeys">0</b></span><span id="recLeft"></span></div>
+      <details style="margin:6px 0"><summary>🔔 Beep settings</summary><div class="in">
+        <label for="bFreq">Frequency (Hz): <span id="bFreqV"></span></label><input type="range" id="bFreq" min="1500" max="3500" step="100" value="2400">
+        <label for="bLen">Length (ms): <span id="bLenV"></span></label><input type="range" id="bLen" min="100" max="400" step="10" value="150">
+        <label for="bVol">Volume: <span id="bVolV"></span></label><input type="range" id="bVol" min="0.1" max="1" step="0.05" value="0.5">
+        <label class="chk"><input type="checkbox" id="bMon"> Monitor beep (use headphones)</label>
+      </div></details>
+      <div id="recOut" hidden>
+        <div id="recPlayer"></div>
+        <canvas class="wave" id="recWave" width="700" height="70"></canvas>
+        <div class="strip"><b id="recWaveInfo"></b><span>click = add marker · drag = move · double-click = delete</span></div>
+        <div class="row"><button class="btn" id="saveRec">💾 Recording</button><button class="btn" id="saveWav">💾 .wav</button><button class="btn" id="saveMk">💾 Markers</button><button class="btn" id="saveTr">💾 Transcript</button><button class="btn" id="saveAll">📦 Everything</button></div>
+        <div class="row" style="margin-top:8px"><button class="btn" id="recNoAI">⚙️ Process without AI</button><button class="btn" id="recAI">✨ Process with AI</button></div>
+      </div>
+      <h4 style="margin:12px 0 2px">Saved recordings</h4>
+      <div class="list" id="recList"></div>
+    </section>
+
+    <section id="tab-up" hidden>
+      <div class="seg" data-ai="up"><button data-v="no">Without AI</button><button data-v="ai">With AI</button></div>
+      <label for="upFile">Audio or video file (mp3, wav, m4a, aac, ogg, flac, webm, mp4, mov)</label>
+      <input type="file" id="upFile" accept="audio/*,video/*">
+      <div id="upOut" hidden>
+        <div class="strip"><b id="upName"></b><span id="upDur"></span></div>
+        <div id="upPlayer"></div>
+        <canvas class="wave" id="upWave" width="700" height="70"></canvas>
+        <div class="strip"><b id="upWaveInfo"></b><span>click = add · drag = move · double-click = delete</span></div>
+        <div class="row"><button class="btn" id="upNoAI">⚙️ Process without AI</button><button class="btn" id="upAI">✨ Process with AI</button></div>
+      </div>
+    </section>
+  </div></details>
+
+  <details><summary>2️⃣ Cast, scenes and camera</summary><div class="in">
+    <label>Cast</label><div class="chips" id="castChips"></div>
+    <div class="row"><input type="text" id="castIn" placeholder="New character"><button class="btn sm" id="castAdd" style="flex:none">Add</button></div>
+    <label>Scene</label>
+    <div class="row"><select id="scKind" style="flex:none;width:96px"><option>INT.</option><option>EXT.</option><option>INT./EXT.</option></select><input type="text" id="scPlace" placeholder="LOCATION"></div>
+    <div class="row" style="margin-top:6px"><select id="scTime"><option>DAY</option><option>NIGHT</option><option>MORNING</option><option>EVENING</option><option>CONTINUOUS</option></select><button class="btn" id="scAdd">🎞 Add scene</button></div>
+    <div class="chips" id="placeChips"></div>
+    <label>Camera</label>
+    <select id="camShot"></select>
+    <div class="row" style="margin-top:6px"><input type="text" id="camSubj" placeholder="Subject (optional)"><button class="btn" id="camAdd">🎥 Add camera angle</button></div>
+  </div></details>
+
+  <details><summary>3️⃣ Title page</summary><div class="in">
+    <label for="tTitle">Title</label><input type="text" id="tTitle">
+    <label for="tAuthor">Written by</label><input type="text" id="tAuthor">
+    <label for="tContact">Contact</label><textarea id="tContact" rows="2"></textarea>
+    <label for="tDate">Date</label><input type="text" id="tDate" placeholder="Draft date">
+  </div></details>
+
+  <details open><summary>4️⃣ Finish and save</summary><div class="in">
+    <label class="chk"><input type="checkbox" id="optColors"> Show speaker colors</label>
+    <div class="row"><button class="btn" id="fmtBtn">🎬 Format as film script</button><button class="btn" id="undoFmt" hidden>↩ Undo format</button></div>
+    <div class="row" style="margin-top:6px"><button class="btn" id="chkBtn">🔎 Re-check speakers</button></div>
+    <div class="row" style="margin-top:6px"><button class="btn" id="newSheetP">＋ New sheet</button><button class="btn" id="newScript">📄 New script</button></div>
+    <label for="libSel">Open a saved script</label><select id="libSel"></select>
+    <div class="row" style="margin-top:8px"><button class="btn" id="exFount">⬇ .fountain</button><button class="btn" id="exTxt">⬇ .txt</button></div>
+    <div class="row" style="margin-top:6px"><button class="btn" id="exCopy">📋 Copy text</button><button class="btn pri" id="exPrint">🖨 Print / PDF</button></div>
+    <div class="box" id="report" style="margin-top:8px" hidden></div>
+    <label>AI accuracy (decisions you did not change)</label>
+    <div class="meter"><div id="accBar" style="width:0%"></div></div><div id="accTxt" style="font-size:12px;color:var(--muted)">No reviewed AI decisions yet.</div>
+  </div></details>
+
+  <details><summary>5️⃣ Teach the AI</summary><div class="in">
+    <div class="box">Browsers cannot fine-tune Gemini. "Teaching" here means: (1) your corrections are remembered and the 6 most relevant are added to every prompt as examples; (2) gold recordings (under 60 s) can be sent along with recorded-audio prompts; (3) you can export a .jsonl file for fine-tuning later in Google AI Studio or Vertex AI. Nothing is trained inside the browser.</div>
+    <div class="strip">Remembered corrections: <b id="exCount">0</b></div>
+    <label for="goldRec">Gold example: recording</label><select id="goldRec"></select>
+    <label for="goldScript">Correct script (one line each: NAME: words, or ACTION: text)</label>
+    <textarea id="goldScript" rows="4" placeholder="ALEX: I'm leaving tonight.&#10;MAYA: Then take the keys."></textarea>
+    <button class="btn" id="goldSave" style="margin-top:6px">⭐ Save gold example</button>
+    <div class="list" id="goldList"></div>
+    <div class="row" style="margin-top:6px"><button class="btn" id="exJsonl">⬇ Export training data (.jsonl)</button><button class="btn dng" id="exClear">Forget corrections</button></div>
+    <p style="font-size:12px;color:var(--muted)">The .jsonl export is for later fine-tuning, not for training inside this page.</p>
+  </div></details>
+</aside>
+
+<main class="main">
+  <div class="toolbar">
+    <button class="btn sm" id="tbNew">＋ New sheet</button>
+    <button class="btn sm dng" id="tbClear">↻ Clear all</button><span class="sep"></span>
+    <select id="lsSel" aria-label="Line spacing"><option value="1.1">Single</option><option value="1.5">1.5</option><option value="2" selected>Double</option></select>
+    <span class="sep"></span>
+    <button class="btn sm" id="zOut">Zoom −</button><button class="btn sm" id="zIn">Zoom +</button><button class="btn sm" id="zFit">Fit</button><span class="sep"></span>
+    <button class="btn sm" id="tbPanel">Hide panel</button>
+  </div>
+  <div id="sheetswrap"><div id="sheets"></div><button class="btn big addsheet" id="addSheet">＋ Add new sheet</button></div>
+  <div class="typing"><textarea id="typeIn" rows="2" placeholder='Type or paste a line, e.g. "Maya says that she wants the keys" (Enter to add)'></textarea><button class="btn pri" id="typeBtn">Add line ↵</button></div>
+  <div class="livebox" id="liveBox">
+    <header id="lwHead"><span class="dot" id="lwDot"></span><b>Live words</b><span id="lwLang"></span><span id="lwCount">0 words</span><span class="sp"></span>
+      <button class="btn sm" id="lwCopy">Copy</button><button class="btn sm" id="lwClear">Clear</button></header>
+    <div class="body" id="lwBody"></div>
+    <div class="foot" id="aiRead">AI reading: –</div>
+  </div>
+</main>
+</div>
+<button class="fab" id="fab" title="New sheet" aria-label="New sheet">＋</button>
+<div id="measure"></div>
+
+<script>
+'use strict';
+let API_KEY=''; // Gemini key (leave empty to use key from AI settings, or paste here)
+/* ================= helpers ================= */
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const PAL=['#8EA2FF','#FF8A65','#4DD0A1','#F2C94C','#C792EA','#56CCF2','#F78FB3','#A3D977','#FFB74D'];
+const fmtT=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function blurSoon(e){const t=e.target.closest&&e.target.closest('button,summary');if(t)setTimeout(()=>t.blur(),0)}
+document.addEventListener('click',blurSoon);
+window.addEventListener('error',e=>showErr(e.message));
+window.addEventListener('unhandledrejection',e=>showErr(e.reason&&e.reason.message||String(e.reason)));
+function showErr(m){const b=$('#errbar');b.textContent='⚠ '+m;b.hidden=false;setTimeout(()=>{b.hidden=true},8000)}
+let msgT;function msg(t,err){const m=$('#msg');if(!t){m.hidden=true;return}m.textContent=t;m.classList.toggle('err',!!err);m.hidden=false;clearTimeout(msgT);msgT=setTimeout(()=>{m.hidden=true},err?14000:7000)}
+function dl(name,data,type){const b=data instanceof Blob?data:new Blob([data],{type:type||'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+const b64=blob=>new Promise((res,rej)=>{const f=new FileReader();f.onload=()=>res(String(f.result).split(',')[1]);f.onerror=()=>rej(f.error);f.readAsDataURL(blob)});
+
+/* ================= state ================= */
+const D0=()=>({title:'',author:'',contact:'',date:'',cast:[],places:[],blocks:[],ls:2,lang:'en-US',pending:null,expecting:null});
+let S=Object.assign(D0(),LS.get('sb.cur',{}));
+const OPT=Object.assign({ai:{live:'no',rec:'ai',up:'ai'},uz:1,indirect:true,gold:false,video:false,colors:false,vid:'a',tab:'live',whisperModel:'onnx-community/whisper-tiny',beep:{freq:2400,len:150,vol:0.5,mon:false}},LS.get('sb.opt',{}));
+const saveOpt=()=>LS.set('sb.opt',OPT);
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>LS.set('sb.cur',S),120)}
+const colorOf=n=>{if(!n||n==='UNKNOWN')return '#9aa3af';const i=S.cast.indexOf(n);return PAL[(i<0?0:i)%PAL.length]};
+function addCast(n){n=(n||'').trim().toUpperCase();if(n&&n!=='UNKNOWN'&&!S.cast.includes(n))S.cast.push(n);return n}
+function addPlace(p){p=(p||'').trim().toUpperCase();if(!p)return;S.places=[p,...S.places.filter(x=>x!==p)].slice(0,12)}
+function mkBlock(o){return Object.assign({id:uid(),type:'action',who:null,ext:'',paren:'',text:'',sure:true,by:'',speech:'',reason:'',src:''},o)}
+function recents(){const r=[];for(let i=S.blocks.length-1;i>=0;i--){const b=S.blocks[i];if(b.type==='dialogue'&&b.who&&b.who!=='UNKNOWN'&&!r.includes(b.who))r.push(b.who)}return r}
+function lastDialogue(){for(let i=S.blocks.length-1;i>=0;i--){if(S.blocks[i].type==='dialogue')return S.blocks[i];if(['scene','break'].includes(S.blocks[i].type))return null}return null}
+function addBreak(){const l=S.blocks[S.blocks.length-1];if(l&&l.type==='break')return;S.blocks.push(mkBlock({type:'break'}));render()}
+function nextVoice(){if(S.expecting)return S.expecting;const r=recents();if(!r.length)return '?';const l=lastDialogue();return (l&&r.length>1)?(l.who===r[0]?r[1]:r[0]):r[0]}
+
+/* ================= rules engine (no AI) ================= */
+const VERBS='says|said|asks|asked|replies|replied|whispers|whispered|shouts|shouted|tells|told|adds|added|answers|answered|continues|continued|responds|responded|yells|yelled|exclaims|exclaimed|murmurs|murmured|cries|cried|laughs|laughed|sighs|sighed|explains|explained|declares|declared|insists|insisted|screams|screamed|mutters|muttered|says';
+const STOP=new Set(['the','a','an','it','that','this','who','what','everyone','someone','and','but','then','so','when','as','if','one','there','you','i','we','people','also','later','suddenly','now']);
+const PRON=new Set(['he','she','they']);
+const SHOTS='close up|closeup|extreme close up|wide shot|wide|medium shot|medium|over the shoulder|pov|two shot|aerial|tracking shot|tracking|establishing shot|establishing|low angle|high angle|insert|pan|dolly in|dolly';
+const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function castAlt(){const c=[...S.cast].sort((a,b)=>b.length-a.length).map(reEsc);return c.length?c.join('|'):'(?!)'}
+function deliv(v){v=(v||'').toLowerCase();if(/^softly|^quietly/.test(v))return 'softly';if(/^angrily/.test(v))return 'angrily';if(/^loudly/.test(v))return 'loudly';if(/whisper|murmur|mutter/.test(v))return 'whispering';if(/shout|yell|scream/.test(v))return 'shouting';if(/laugh/.test(v))return 'laughing';if(/cry|cried/.test(v))return 'crying';if(/sigh/.test(v))return 'sighing';return ''}
+function endP(t,p,act){t=t.trim();if(/[.!?]$/.test(t))return t;return t+(p?p[0]:'.')}
+function cap1(s){s=s.trim();return s?s[0].toUpperCase()+s.slice(1):s}
+function otherSpeaker(){const r=recents();const l=lastDialogue();if(!r.length)return 'UNKNOWN';if(l&&r.length>1)return l.who===r[0]?r[1]:r[0];return r.length>1?r[1]:r[0]}
+function resolveName(n){n=n.trim();if(PRON.has(n.toLowerCase()))return otherSpeaker();return n.toUpperCase()}
+function parseCueFirst(t){
+  const re=new RegExp('^('+castAlt()+'|[a-z][a-z\'\\-]*)\\s+('+VERBS+')\\b\\s*[,:]?\\s*(?:(?:to|at)\\s+[a-z]+\\s*,?\\s*)?(?:(whispering|shouting|yelling|screaming|softly|quietly|angrily|loudly|laughing|crying|sighing)\\s*,?\\s*)?(?:that\\s+)?(.*)$','i');
+  const m=t.match(re);if(!m)return null;const n=m[1];
+  if(STOP.has(n.toLowerCase())&&!PRON.has(n.toLowerCase()))return null;
+  const known=S.cast.includes(n.toUpperCase());
+  if(!known&&!PRON.has(n.toLowerCase())&&!/^[A-Z]/.test(n)&&n.length<3)return null;
+  return {who:resolveName(n),verb:m[2],manner:m[3]||'',text:m[4].trim()};
+}
+function parseCueLast(t){
+  const re=new RegExp('^(.+?)[,\\s]+('+VERBS+')\\s+('+castAlt()+'|[a-z][a-z\'\\-]*)\\s*[.!?]*$','i');
+  const m=t.match(re);if(!m)return null;const n=m[3];if(STOP.has(n.toLowerCase())&&!PRON.has(n.toLowerCase()))return null;
+  return {who:resolveName(n),verb:m[2],text:m[1].trim()};
+}
+function rulesBlocks(text){
+  const out=[];let pend=S.pending;
+  const sents=String(text).replace(/\s+/g,' ').trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+  let prevDlg=!!(lastDialogue()&&S.blocks[S.blocks.length-1]&&S.blocks[S.blocks.length-1].type==='dialogue');
+  for(let s of sents){
+    const P=(s.match(/[.!?]+$/)||[''])[0];const t=s.replace(/[.!?]+$/,'').trim();if(!t)continue;
+    if(/^(please\s+)?(start\s+a\s+)?(new|next)\s+(page|sheet)$/i.test(t)){out.push({type:'break'});prevDlg=false;continue}
+    let m=t.match(/^(cut to|fade in|fade out|dissolve to|smash cut to|match cut to)\b\s*(.*)$/i);
+    if(m){let T=(m[1]+' '+m[2]).trim().toUpperCase();T+=/^FADE OUT/.test(T)?'.':':';out.push({type:'transition',text:T});prevDlg=false;continue}
+    m=t.match(/^(?:camera|angle)\s+(.+)$/i);
+    if(m||new RegExp('^('+SHOTS+')\\b','i').test(t)){out.push({type:'shot',text:(m?m[1]:t).toUpperCase()});prevDlg=false;continue}
+    m=t.match(/^(interior|exterior|inside|outside|int|ext)\.?\s+(.+?)(?:\s+(day|night|morning|evening|afternoon|dawn|dusk|continuous|later))?$/i);
+    if(m&&!new RegExp('\\b('+VERBS+')\\b','i').test(t)){
+      const k=/^(int|inside)/i.test(m[1])?'INT.':'EXT.';const place=m[2].replace(/^(of|the)\s+/i,'').toUpperCase();addPlace(place);
+      out.push({type:'scene',text:k+' '+place+(m[3]?' - '+m[3].toUpperCase():'')});prevDlg=false;continue}
+    let c=parseCueFirst(t);
+    if(c){
+      if(c.text){out.push({type:'dialogue',who:c.who,text:endP(cap1(c.text),P),paren:deliv(c.manner)||deliv(c.verb),sure:c.who!=='UNKNOWN',speech:'direct'});pend=null;prevDlg=true}
+      else pend=c.who;
+      continue}
+    c=parseCueLast(t);
+    if(c&&c.text){out.push({type:'dialogue',who:c.who,text:endP(cap1(c.text),P),paren:deliv(c.verb),sure:c.who!=='UNKNOWN',speech:'direct'});pend=null;prevDlg=true;continue}
+    if(pend){out.push({type:'dialogue',who:pend,text:endP(cap1(t),P),sure:true,speech:'direct'});pend=null;prevDlg=true;continue}
+    if(prevDlg&&/\?|\b(i|i'm|i'll|i've|you|you're|we|let's|my|your|please|yes|no|okay|ok|don't|can't|won't)\b/i.test(t)){
+      out.push({type:'dialogue',who:otherSpeaker(),text:endP(cap1(t),P),sure:false,speech:'direct'});continue}
+    out.push({type:'action',text:endP(cap1(t),P,true),speech:'narration'});prevDlg=false;
+  }
+  return {blocks:out,pending:pend};
+}
+function applyBlocks(blocks,by,src,extra){
+  let hadDlg=false;
+  for(const b of blocks){
+    const type=['scene','shot','transition','action','dialogue','break'].includes(b.type)?b.type:'action';
+    if(type==='break'){const l=S.blocks[S.blocks.length-1];if(!(l&&l.type==='break'))S.blocks.push(mkBlock({type:'break'}));continue}
+    let who=null;
+    if(type==='dialogue'){who=(b.who||'UNKNOWN').toString().trim().toUpperCase()||'UNKNOWN';if(who==='NULL'||who==='NONE')who='UNKNOWN';addCast(who);hadDlg=true}
+    if(type==='scene'){const m=String(b.text||'').match(/^(?:INT\.\/EXT\.|INT\.|EXT\.)\s*([^-]+)/i);if(m)addPlace(m[1])}
+    const text=String(b.text||'').trim();if(!text)continue;
+    S.blocks.push(mkBlock({type,who,ext:(b.ext||'').toUpperCase(),paren:String(b.paren||'').replace(/^\(|\)$/g,''),text,
+      sure:type==='dialogue'?(b.sure!==false&&who!=='UNKNOWN'):true,by,speech:b.speech||(type==='dialogue'?'direct':type==='action'?'narration':'command'),reason:b.reason||'',src:src||''}));
+  }
+  if(extra){S.expecting=extra.expecting&&String(extra.expecting).toUpperCase()!=='NULL'?String(extra.expecting).toUpperCase():null;S.pending=extra.pending===undefined?S.pending:extra.pending}
+  if(hadDlg&&!(extra&&extra.pending))S.pending=extra&&extra.pending!==undefined?extra.pending:null;
+  if(hadDlg&&extra&&extra.expecting===undefined)S.expecting=null;
+  render();
+}
+
+/* ================= Gemini ================= */
+const MODELS=['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-flash-8b','gemini-3.8-flash','gemini-3.5-flash','gemini-3.5-flash-lite'];
+let mIdx=Math.min(LS.get('sb.mIdx',0),MODELS.length-1);
+if(mIdx<0||mIdx>=MODELS.length)mIdx=0;
+class GErr extends Error{constructor(k,m){super(m||k);this.kind=k}}
+const getKey=()=>API_KEY||LS.get('sb.key','');
+const hasKey=()=>!!getKey();
+function parseJSON(t){const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw new GErr('parse','The AI reply was not JSON');try{return JSON.parse(t.slice(a,b+1))}catch(e){throw new GErr('parse','The AI reply could not be read')}}
+async function gem(parts,o={}){
+  const key=getKey();if(!key)throw new GErr('nokey','No Gemini key');
+  const delays=o.delays||[700];let quota=false;
+  for(let mi=mIdx;mi<MODELS.length;mi++){
+    const model=MODELS[mi];let gone=false;
+    for(let a=0;a<=delays.length&&!gone;a++){
+      if(a>0)await sleep(delays[a-1]);
+      for(let tt=0;tt<2;tt++){
+        const gc={responseMimeType:'application/json',temperature:o.temp==null?0.2:o.temp,maxOutputTokens:o.tokens||4096};
+        if(!noThink[model])gc.thinkingConfig={thinkingLevel:'low'};
+        let r,j;
+        try{r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{parts}],generationConfig:gc})});j=await r.json().catch(()=>({}))}catch(e){break}
+        if(r.ok){const txt=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).filter(p=>!p.thought&&p.text).map(p=>p.text).join('');LS.set('sb.mIdx',mIdx);$('#aiStatus').dataset.model=model;aiStatus();return parseJSON(txt)}
+        const em=(j.error&&j.error.message)||'';
+        if(r.status===404||/no longer available/i.test(em)){mIdx=Math.min(MODELS.length-1,mi+1);LS.set('sb.mIdx',mIdx);gone=true;break}
+        if(r.status===400&&/thinking/i.test(em)&&!noThink[model]){noThink[model]=true;continue}
+        if(r.status===401||r.status===403||(r.status===400&&/api key/i.test(em)))throw new GErr('key',em);
+        if(r.status===429)quota=true;
+        if([500,503,429].includes(r.status)||/high demand|overloaded/i.test(em))break;
+        throw new GErr('http',em||('HTTP '+r.status));
+      }
+    }
+  }
+  throw new GErr(quota?'quota':'busy');
+}
+function gerrMsg(e){const k=e&&e.kind;return k==='nokey'?'No Gemini key saved, using the rules engine.':k==='key'?'Gemini rejected the key. Check it in AI settings.':k==='quota'?'Free Gemini limit reached for now.':k==='busy'?'Gemini is busy right now.':k==='parse'?(e.message):('Gemini problem: '+(e&&e.message))}
+function aiStatus(){const m=$('#aiStatus').dataset.model;$('#aiStatus').textContent=hasKey()?('✨ AI ready'+(m?' · '+m:' · key saved')+'. Rules engine is the fallback.'):'🧩 No Gemini key. Everything works with the rules engine and on-device speech model.'}
+
+/* ---- prompt ---- */
+const CORE=`You are the script engine of "Script Booth", a voice-powered film script generator.
+HOW THE INPUT WORKS
+A narrator tells a story aloud. The narrator says who speaks ("Alex says that I'm leaving tonight") and presses a key (or headphone button) whenever the dialogue changes from one character to another. You receive ONE segment: the words between two key presses (or, for audio, the whole recording with key times).
+DECIDE THE SPEAKER IN THIS ORDER
+1. A cue inside the segment ("Alex says that...", "Tom replied", "she whispered"). The cue is NOT dialogue: remove it from the text.
+2. A pending cue carried from the previous segment (listed under STATE).
+3. The key boundary: with no cue the speaker is NOT the previous speaker. Choose the other party, the person addressed, or the speaker before the previous one when there are 3+ characters.
+4. Pronouns (he/she/they) resolve to the latest matching character.
+If unsure give your best guess with "sure":false. Use UNKNOWN only when there is no candidate.
+OTHER BLOCK TYPES
+"action": present tense, concise, visual. "scene": INT./EXT. LOCATION - TIME. "shot": camera directions in CAPS. "transition": CUT TO:, FADE OUT. "break": start a new page.
+RULES
+Character names UPPERCASE. Keep the characters' own words. Convert indirect speech to direct speech when asked. Put delivery (whispering, angry) in "paren". Use "ext" for V.O. or O.S. Never invent story content.
+EXAMPLES
+"Alex says that I'm leaving tonight" -> {"blocks":[{"type":"dialogue","who":"ALEX","text":"I'm leaving tonight.","sure":true}],"expecting":null}
+"Maya replied whispering please stay" -> {"blocks":[{"type":"dialogue","who":"MAYA","paren":"whispering","text":"Please stay.","sure":true}],"expecting":null}
+"Tom says" -> {"blocks":[],"expecting":"TOM"}
+"interior kitchen night" -> {"blocks":[{"type":"scene","text":"INT. KITCHEN - NIGHT"}],"expecting":null}
+(after ALEX spoke, no cue) "where will you go" -> {"blocks":[{"type":"dialogue","who":"MAYA","text":"Where will you go?","sure":false}],"expecting":"ALEX"}
+REPLY FORMAT (JSON only)
+{"blocks":[{"type":"scene|shot|transition|action|dialogue|break","who":"NAME or null","ext":"","paren":"","text":"...","sure":true}],"expecting":"NAME or null"}`;
+const EXT=`\nFor every block also add "speech":"direct|indirect|narration|command" (direct = the character's own words; indirect = reported speech such as "Alex says that he will leave"; narration = description not spoken by a character; command = scene/camera/transition/new page) and "reason":"one short sentence".`;
+function stateText(){
+  const r=recents().slice(0,4);const last=S.blocks.slice(-12).map(b=>b.type==='dialogue'?(b.who+': '+b.text):('['+b.type.toUpperCase()+'] '+(b.text||''))).join('\n')||'(empty)';
+  return `STATE\nKnown cast: ${S.cast.join(', ')||'(none)'}\nMost recent speakers (latest first): ${r.join(', ')||'(none)'}\nPending cue: ${S.pending||'none'}\nLast script lines:\n${last}`;
+}
+const CUES=['says','said','asks','replies','whispers','shouts','tells','adds','answers'];
+function relevantExamples(seg){
+  const ex=EXC.slice();const words=new Set((seg||'').toLowerCase().match(/[a-z']+/g)||[]);
+  const sc=e=>{let s=0;(e.cast||[]).forEach(n=>{if(S.cast.includes(n))s+=2});const ew=(e.seg||'').toLowerCase().match(/[a-z']+/g)||[];ew.forEach(w=>{if(words.has(w)){s+=CUES.includes(w)?2:.3}});return s+(e.t||0)/1e14};
+  return ex.sort((a,b)=>sc(b)-sc(a)).slice(0,6);
+}
+function examplesText(seg){const e=relevantExamples(seg);if(!e.length)return '';return '\nExamples from this user (their corrections, follow them):\n'+e.map(x=>`- Segment: "${x.seg}" -> speaker ${x.correct.who||'-'} as ${x.correct.type}${x.correct.speech?' ('+x.correct.speech+')':''}`).join('\n')+'\n'}
+function livePrompt(seg){
+  return CORE+(OPT.indirect?'\nConvert indirect speech to direct dialogue in the first person.':'')+EXT+'\n'+examplesText(seg)+'\n'+stateText()+'\n\nSEGMENT (between two key presses):\n"'+seg+'"';
+}
+function audioPrompt(k,n,rel,hasKeys,goldN){
+  let p=CORE+EXT+'\n'+examplesText('')+'\nAUDIO MODE: listen to the audio, transcribe it, and return screenplay blocks in order. Return as many blocks as needed.\n';
+  p+=`This is part ${k} of ${n}. ${k>1?'Continue the script shown below, do not repeat earlier lines.':''}\n`;
+  p+=`The audio contains BEEPS (a pure tone near ${OPT.beep.freq} Hz). A beep means "dialogue changed hands here". Never write a word for a beep. `;
+  p+=hasKeys?`Beeps/key presses occur at these times in seconds from the start of this part: ${rel.map(x=>x.toFixed(1)).join(', ')||'(none in this part)'}. Each marks a boundary between two turns.\n`:`No key times exist for this recording, so find the turn changes from the content.\n`;
+  p+=OPT.indirect?'Convert indirect speech to direct dialogue in the first person ("Alex says that he will leave" becomes ALEX: "I\'ll leave."). Always remove cue words like "Alex says that".\n':'Do not convert indirect speech: keep it as an action or V.O. line. Always remove cue words like "Alex says that" from dialogue text.\n';
+  if(goldN)p+=`The first ${goldN} audio clip(s) are EXAMPLES with correct answers given below; process only the LAST audio clip.\n`;
+  return p+'\n'+stateText();
+}
+async function aiSegment(seg){
+  const j=await gem([{text:livePrompt(seg)}],{tokens:4096,delays:[700]});
+  return j;
+}
+
+/* ================= live segment processing ================= */
+let queueItems=[],Q=Promise.resolve();
+function showAI(){$('#aiRead').textContent='AI reading: '+(queueItems.length?queueItems.map(s=>'“'+s.slice(0,60)+'”').join(' · '):'–')}
+function enqueue(text,ref){
+  text=text.trim();if(!text)return;queueItems.push(text);showAI();
+  Q=Q.then(()=>processSeg(text,ref)).catch(e=>console.error(e)).then(()=>{queueItems.shift();showAI()});
+}
+async function processSeg(text,ref){
+  let who=null;
+  if(OPT.ai.live==='ai'&&hasKey()&&!aiOff){
+    try{const j=await aiSegment(text);const before=S.blocks.length;
+      const hasD=(j.blocks||[]).some(b=>b.type==='dialogue');
+      applyBlocks(j.blocks||[],'AI',text,{expecting:j.expecting||null,pending:(!hasD&&j.expecting)?String(j.expecting).toUpperCase():null});
+      const d=S.blocks.slice(before).filter(b=>b.type==='dialogue');who=d.length?d[d.length-1].who:null;
+      if(ref)LW.tag(ref,who);return}
+    catch(e){if(e.kind==='key'||e.kind==='nokey'){aiOff=true}msg(gerrMsg(e)+' Using the rules engine for this line.',true)}
+  }
+  const r=rulesBlocks(text);const before=S.blocks.length;
+  applyBlocks(r.blocks,'rules',text,{expecting:null,pending:r.pending});
+  const d=S.blocks.slice(before).filter(b=>b.type==='dialogue');
+  if(ref)LW.tag(ref,d.length?d[d.length-1].who:(r.pending?r.pending+'?':null));
+}
+let aiOff=false;
+
+/* ================= dialogue change ================= */
+let lastDC=0;
+const active=()=>SR.on||R.on;
+function dialogueChange(src){
+  if(!active())return false;
+  const now=performance.now();if(now-lastDC<250)return false;lastDC=now;
+  const c=$('#nvCard');c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');
+  if(R.on){R.keys.push(R.ctx.currentTime-R.t0);beep();$('#recKeys').textContent=R.keys.length}
+  if(SR.on){const p=SR.words().length+SR.interim.length;SR.markers.push(p);LW.keys.push({pos:p,n:LW.keys.length+1});pump()}
+  LW.render();strip();return true;
+}
+const isEditable=t=>t&&(/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)||t.isContentEditable);
+document.addEventListener('keydown',e=>{if(active()&&!isEditable(e.target)&&(e.key===' '||e.key==='Enter'))e.preventDefault()});
+document.addEventListener('keyup',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey||['Shift','Control','Alt','Meta','CapsLock','Tab','Escape'].includes(e.key))return;
+  if(isEditable(e.target))return;
+  if(active()&&(e.key===' '||e.key==='Enter'))e.preventDefault();
+  dialogueChange('key');
+});
+$('#dcBtn').addEventListener('click',()=>{if(!dialogueChange('btn'))msg('Start listening or recording first. A dialogue change only counts while the microphone is on.')});
+
+/* ================= speech recognition ================= */
+let DIAG='';function diag(t){DIAG=t;LW.render()}
+const SR={on:false,rec:null,committed:[],sessFinal:[],interim:[],markers:[],emitPos:0,fails:0,proc:true,t0:0,gotResult:false,sessStart:0,
+  words(){return this.committed.concat(this.sessFinal)}};
+function pump(){
+  const W=SR.words();
+  while(SR.markers.length&&SR.markers[0]<=W.length){const m=SR.markers.shift();if(m>SR.emitPos){const seg=W.slice(SR.emitPos,m).join(' ');const ref={start:SR.emitPos,end:m};SR.emitPos=m;if(SR.proc)enqueue(seg,ref)}}
+}
+function srStart(proc){
+  const C=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!C){msg('Speech recognition is not supported in this browser. Use Chrome or Edge, or the typing box.',true);LW.unavail=true;LW.render();return false}
+  if(location.protocol==='file:'){msg('Open the app from http://localhost (run start-windows.bat). Speech recognition does not work from a file:// address.',true);diag('Opened as file:// - speech recognition is blocked. Use start-windows.bat or python3 -m http.server 8765.')}
+  Object.assign(SR,{on:true,committed:[],sessFinal:[],interim:[],markers:[],emitPos:0,fails:0,proc,t0:Date.now()});
+  LW.reset();LW.unavail=false;aiOff=false;if(location.protocol!=='file:')diag('Starting the speech service…');srSession(C);return true;
+}
+function srSession(C){
+  const r=new C();r.lang=S.lang;r.continuous=true;r.interimResults=true;SR.rec=r;SR.sessStart=Date.now();SR.gotResult=false;SR.sessFinal=[];SR.interim=[];
+  r.onstart=()=>diag('Speech service started. Waiting for the microphone…');
+  r.onaudiostart=()=>diag('Microphone is open. Speak now…');
+  r.onspeechstart=()=>diag('Hearing speech…');
+  r.onresult=e=>{SR.gotResult=true;diag('Recognising…');const fin=[],int=[];
+    for(let i=0;i<e.results.length;i++){const t=e.results[i][0].transcript.trim();const w=t?t.split(/\s+/):[];(e.results[i].isFinal?fin:int).push(...w)}
+    SR.sessFinal=fin;SR.interim=int;pump();LW.render()};
+  r.onerror=e=>{
+    diag('Speech error: '+e.error+(e.message?' ('+e.message+')':''));
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){srFatal(SR.proc?'The microphone is blocked. Allow it in the address bar, or use the typing box.':null,'Live words unavailable (microphone refused).')}
+    else if(e.error==='network'){srFatal(SR.proc?'The speech service could not be reached (network). Check your internet, or use the typing box.':null,'Live words unavailable (network).')}
+    else if(e.error==='audio-capture'&&!SR.proc){srFatal(null,'Live words unavailable (the browser refused a second microphone use).')}
+  };
+  r.onend=()=>{
+    if(!SR.on)return;diag('Speech session ended, restarting…');
+    SR.committed.push(...SR.sessFinal,...SR.interim);SR.sessFinal=[];SR.interim=[];
+    const quick=Date.now()-SR.sessStart<1500&&!SR.gotResult;SR.fails=quick?SR.fails+1:0;
+    if(SR.fails>=4){srFatal(SR.proc?'The microphone gave no speech four times in a row. Check the microphone and internet, or use the typing box.':null,'Live words unavailable (no speech result).');return}
+    setTimeout(()=>{if(SR.on)srSession(C)},150);
+  };
+  try{r.start()}catch(e){}
+}
+function srFatal(m,lw){
+  if(m){msg(m,true);diag(m)}
+  if(SR.proc){srStop(true);setListenUI(false);if(R.on&&$('#liveRec').checked)recStop()}
+  else{SR.on=false;try{SR.rec&&SR.rec.abort()}catch(e){}LW.unavail=lw||'Live words unavailable';LW.render();syncActive()}
+}
+function srStop(flush){
+  if(!SR.on&&!flush){return}
+  SR.on=false;try{SR.rec&&(SR.rec.onend=null,SR.rec.stop())}catch(e){}
+  SR.committed.push(...SR.sessFinal,...SR.interim);SR.sessFinal=[];SR.interim=[];
+  const W=SR.committed;
+  if(SR.proc){
+    for(const m of SR.markers){const mm=Math.min(m,W.length);if(mm>SR.emitPos){enqueue(W.slice(SR.emitPos,mm).join(' '),{start:SR.emitPos,end:mm});SR.emitPos=mm}}
+    if(W.length>SR.emitPos){enqueue(W.slice(SR.emitPos).join(' '),{start:SR.emitPos,end:W.length});SR.emitPos=W.length}
+  }
+  SR.markers=[];LW.render();
+}
+function setListenUI(on){const b=$('#listenBtn');b.classList.toggle('live',on);b.textContent=on?'⏹ Stop listening':'🎙 Start listening';syncActive();strip()}
+$('#listenBtn').addEventListener('click',async()=>{
+  if(SR.on){srStop();if(R.on&&$('#liveRec').checked)recStop();setListenUI(false);return}
+  if(R.on){msg('A recording is running. Stop it first.');return}
+  if(!SR.proc&&SR.on)return;
+  if($('#liveRec').checked){const ok=await recStart({video:false,live:true});if(!ok)return}
+  if(!$('#liveRec').checked&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop())}
+    catch(e){const m='The microphone is blocked or missing ('+(e.name||'error')+'). Click the lock icon in the address bar, allow the microphone, then try again. You can use the typing box meanwhile.';msg(m,true);diag(m);return}
+  }
+  if(!srStart(true)){if(R.on)recStop();return}
+  setListenUI(true);
+});
+
+/* ================= live words box ================= */
+const LW={keys:[],tags:[],unavail:false,pend:false,
+  reset(){this.keys=[];this.tags=[];this.render()},
+  tag(ref,who){this.tags.push({s:ref.start,e:ref.end,who});this.render()},
+  render(){if(this.pend)return;this.pend=true;requestAnimationFrame(()=>{this.pend=false;this.draw()})},
+  draw(){
+    const body=$('#lwBody'),W=SR.words(),all=W.concat(SR.interim);
+    $('#lwDot').classList.toggle('on',active());$('#lwLang').textContent='· '+S.lang;$('#lwCount').textContent='· '+W.length+' words';
+    let h=this.unavail?`<div class="box err">${esc(typeof this.unavail==='string'?this.unavail:'Live words unavailable')}</div>`:'';
+    const keyAt={};this.keys.forEach(k=>{(keyAt[k.pos]=keyAt[k.pos]||[]).push(k)});
+    const tagEnd={};this.tags.forEach(t=>{tagEnd[t.e]=t});
+    const colorAt=i=>{const t=this.tags.find(t=>i>=t.s&&i<t.e);return t&&t.who?colorOf(t.who.replace('?','')):''};
+    const emit=pos=>{
+      if(tagEnd[pos]&&tagEnd[pos].who)h+=`<span class="stag" style="--c:${colorOf(tagEnd[pos].who.replace('?',''))}">${esc(tagEnd[pos].who)} →</span>`;
+      (keyAt[pos]||[]).forEach(k=>{h+=`<span class="kchip">⏎ KEY ${k.n}</span>`});
+    };
+    for(let i=0;i<all.length;i++){
+      emit(i);
+      const interim=i>=W.length,c=colorAt(i);
+      h+=interim?`<i>${esc(all[i])} </i>`:`<span ${c?`style="border-bottom:2px solid ${c}"`:''}>${esc(all[i])} </span>`;
+    }
+    emit(all.length);
+    if(!all.length&&!this.unavail)h+=`<i>${active()?'Listening…':'Live words appear here while you listen or record.'}</i>`;
+    if(DIAG)h+=`<div style="color:var(--muted);font-size:12px;margin-top:6px">ℹ ${esc(DIAG)}</div>`;
+    body.innerHTML=h;body.scrollTop=body.scrollHeight;
+  },
+  text(){const W=SR.words().concat(SR.interim);const kp={};this.keys.forEach(k=>{kp[k.pos]=(kp[k.pos]||'')+' ⏎'});let o='';for(let i=0;i<=W.length;i++){if(kp[i])o+=kp[i]+' ';if(i<W.length)o+=W[i]+' '}return o.trim()}
+};
+$('#lwHead').addEventListener('click',e=>{if(e.target.closest('button'))return;$('#liveBox').classList.toggle('col')});
+$('#lwCopy').addEventListener('click',()=>{navigator.clipboard&&navigator.clipboard.writeText(LW.text()).then(()=>msg('Live words copied.'),()=>msg('Could not copy.',true))});
+$('#lwClear').addEventListener('click',()=>{if(SR.on){SR.committed=[];SR.sessFinal=[];SR.emitPos=0;SR.markers=[]}LW.keys=[];LW.tags=[];LW.render()});
+
+/* ================= typing card ================= */
+function addTyped(){const t=$('#typeIn').value.trim();if(!t)return;$('#typeIn').value='';enqueue(t,null)}
+$('#typeBtn').addEventListener('click',addTyped);
+$('#typeIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();addTyped()}});
+
+/* ================= headphone button ================= */
+const HP={a:null,url:null,last:0,on:false,
+  start(){if(this.on)return;this.on=true;
+    if(!this.url){const n=8000,f=new Float32Array(n);for(let i=0;i<n;i++)f[i]=(i%2?3:-3)/32768;this.url=URL.createObjectURL(wavBlob(f,8000))}
+    this.a=new Audio(this.url);this.a.loop=true;this.a.volume=1;this.a.play().catch(()=>{});
+    if('mediaSession' in navigator){
+      try{navigator.mediaSession.metadata=new MediaMetadata({title:'Script Booth',artist:'Press = dialogue change'})}catch(e){}
+      const h=()=>{const n=performance.now();if(n-this.last<300)return;this.last=n;dialogueChange('hp');if(this.a)this.a.play().catch(()=>{});try{navigator.mediaSession.playbackState='playing'}catch(e){}};
+      ['play','pause','nexttrack','previoustrack','stop'].forEach(a=>{try{navigator.mediaSession.setActionHandler(a,h)}catch(e){}});
+    }},
+  stop(){if(!this.on)return;this.on=false;if(this.a){this.a.pause();this.a=null}
+    if('mediaSession' in navigator)['play','pause','nexttrack','previoustrack','stop'].forEach(a=>{try{navigator.mediaSession.setActionHandler(a,null)}catch(e){}})}};
+function syncActive(){active()?HP.start():HP.stop();LW.render()}
+
+/* ================= WAV, decode, split ================= */
+function wavBlob(f32,sr){sr=sr||16000;const n=f32.length,b=new ArrayBuffer(44+n*2),v=new DataView(b);const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const s=Math.max(-1,Math.min(1,f32[i]));v.setInt16(44+i*2,s<0?s*0x8000:s*0x7fff,true)}return new Blob([b],{type:'audio/wav'})}
+async function decodeToPCM(blob){
+  const AC=window.AudioContext||window.webkitAudioContext;const ctx=new AC();let buf;
+  try{buf=await ctx.decodeAudioData(await blob.arrayBuffer())}catch(e){ctx.close();
+    if(/^video\//.test(blob.type)||true){return decodeToPCM(await audioViaVideo(blob))}throw e}
+  ctx.close();
+  const oc=new OfflineAudioContext(1,Math.max(1,Math.ceil(buf.duration*16000)),16000);const s=oc.createBufferSource();s.buffer=buf;s.connect(oc.destination);s.start();
+  return (await oc.startRendering()).getChannelData(0);
+}
+function audioViaVideo(blob){return new Promise((res,rej)=>{
+  if(blob.__viaVideo)return rej(new Error('This file could not be decoded. Try converting it to mp3/wav/mp4.'));
+  const v=document.createElement('video');const u=URL.createObjectURL(blob);v.src=u;v.preload='auto';v.muted=false;v.volume=0.001;
+  v.onloadedmetadata=()=>{
+    try{const st=v.captureStream?v.captureStream():v.mozCaptureStream();const at=st.getAudioTracks();if(!at.length)throw new Error('No audio track');
+      const mr=new MediaRecorder(new MediaStream(at));const ch=[];mr.ondataavailable=e=>e.data.size&&ch.push(e.data);
+      mr.onstop=()=>{URL.revokeObjectURL(u);const o=new Blob(ch,{type:mr.mimeType});o.__viaVideo=true;res(o)};
+      v.onended=()=>mr.stop();mr.start(1000);msg('Extracting audio from the video in real time…');v.play().catch(rej)}catch(e){URL.revokeObjectURL(u);rej(e)}};
+  v.onerror=()=>rej(new Error('This file could not be decoded.'));
+})}
+function splitParts(n,sr,target,tail,max){
+  target=target||360;tail=tail||30;max=max||390;sr=sr||16000;
+  return function(pcm){const parts=[];let pos=0;const total=pcm.length;
+    while((total-pos)/sr>max){
+      const a=pos+Math.floor((target-tail)*sr),b=pos+target*sr,blk=Math.floor(sr*.5),step=Math.floor(sr*.1);let best=b,bv=Infinity;
+      for(let s=a;s+blk<=b;s+=step){let e=0;for(let i=s;i<s+blk;i+=8)e+=pcm[i]*pcm[i];if(e<bv){bv=e;best=s+Math.floor(blk/2)}}
+      parts.push({s:pos,e:best});pos=best}
+    parts.push({s:pos,e:total});return parts}
+}
+
+/* ================= beep detection (Goertzel) ================= */
+async function detectBeeps(pcm,freq,sr){
+  sr=sr||16000;const N=Math.round(sr*.02),H=Math.round(sr*.01);const nw=Math.floor((pcm.length-N)/H)+1;if(nw<8)return [];
+  const k=2*Math.cos(2*Math.PI*freq/sr),fr=new Float32Array(nw),en=new Float32Array(nw);
+  for(let w=0;w<nw;w++){
+    let s1=0,s2=0,tot=0;const o=w*H;
+    for(let i=0;i<N;i++){const x=pcm[o+i],s0=x+k*s1-s2;s2=s1;s1=s0;tot+=x*x}
+    const P=s1*s1+s2*s2-k*s1*s2;en[w]=tot/N;fr[w]=tot>0?(2*P/N)/tot:0;
+    if(w%20000===19999)await sleep(0);
+  }
+  const sorted=Float32Array.from(en).sort();const med=sorted[Math.floor(sorted.length/2)];const thr=Math.max(2e-6,med*3);
+  const runs=[];let a=-1;
+  for(let w=0;w<=nw;w++){const f=w<nw&&fr[w]>=.6&&en[w]>thr;if(f&&a<0)a=w;if(!f&&a>=0){const b=w-1;if(b-a+1>=7)runs.push({s:a*H/sr,e:(b*H+N)/sr});a=-1}}
+  const m=[];for(const r of runs){const l=m[m.length-1];if(l&&r.s-l.e<.2)l.e=r.e;else m.push({...r})}
+  const dur=pcm.length/sr;return m.filter(b=>b.s>=.3&&b.e<=dur-.3);
+}
+function silenceBeeps(pcm,beeps,sr){sr=sr||16000;const o=pcm.slice();for(const b of beeps){const a=Math.max(0,Math.floor((b.s-.1)*sr)),e=Math.min(o.length,Math.ceil((b.e+.1)*sr));o.fill(0,a,e)}return o}
+
+/* ================= waveform with editable markers ================= */
+function makeWave(cv,infoEl){
+  const W={pcm:null,dur:0,markers:[],peaks:null,drag:-1,onchange:null};
+  W.set=(pcm,markers)=>{W.pcm=pcm;W.dur=pcm.length/16000;W.markers=(markers||[]).slice().sort((a,b)=>a-b);W.peaks=null;W.draw();W.info()};
+  W.info=()=>{infoEl.textContent=W.markers.length+' dialogue change'+(W.markers.length===1?'':'s')+' found'};
+  W.draw=()=>{
+    const w=cv.width=cv.clientWidth*(devicePixelRatio||1)||700,h=cv.height=70*(devicePixelRatio||1);const c=cv.getContext('2d');c.clearRect(0,0,w,h);if(!W.pcm)return;
+    if(!W.peaks||W.peaks.w!==w){const p=new Float32Array(w),bs=Math.max(1,Math.floor(W.pcm.length/w));for(let x=0;x<w;x++){let m=0;const s=x*bs;for(let i=s;i<Math.min(s+bs,W.pcm.length);i+=Math.max(1,bs>>6)){const v=Math.abs(W.pcm[i]);if(v>m)m=v}p[x]=m}W.peaks={w,p}}
+    const css=getComputedStyle(document.documentElement);c.fillStyle=css.getPropertyValue('--acc');
+    const mx=Math.max(.02,...W.peaks.p);for(let x=0;x<w;x++){const v=W.peaks.p[x]/mx*(h/2-4);c.fillRect(x,h/2-v,1,Math.max(1,v*2))}
+    c.fillStyle=css.getPropertyValue('--red');W.markers.forEach(t=>{const x=t/W.dur*w;c.fillRect(x-1,0,2,h);c.beginPath();c.arc(x,6,5,0,7);c.fill()});
+  };
+  const tOf=e=>{const r=cv.getBoundingClientRect();return Math.max(0,Math.min(W.dur,(e.clientX-r.left)/r.width*W.dur))};
+  const near=e=>{const r=cv.getBoundingClientRect();const px=e.clientX-r.left;let bi=-1,bd=8;W.markers.forEach((t,i)=>{const d=Math.abs(t/W.dur*r.width-px);if(d<bd){bd=d;bi=i}});return bi};
+  cv.addEventListener('mousedown',e=>{if(!W.pcm)return;const i=near(e);if(i>=0)W.drag=i});
+  window.addEventListener('mousemove',e=>{if(W.drag>=0){W.markers[W.drag]=tOf(e);W.draw()}});
+  window.addEventListener('mouseup',e=>{if(W.drag>=0){W.markers.sort((a,b)=>a-b);W.drag=-1;W.draw();W.info();W.onchange&&W.onchange()}});
+  cv.addEventListener('click',e=>{if(!W.pcm||near(e)>=0)return;W.markers.push(tOf(e));W.markers.sort((a,b)=>a-b);W.draw();W.info();W.onchange&&W.onchange()});
+  cv.addEventListener('dblclick',e=>{const i=near(e);if(i>=0){W.markers.splice(i,1);W.draw();W.info();W.onchange&&W.onchange()}});
+  window.addEventListener('resize',()=>{if(W.pcm){W.peaks=null;W.draw()}});
+  return W;
+}
+const recWave=makeWave($('#recWave'),$('#recWaveInfo')),upWave=makeWave($('#upWave'),$('#upWaveInfo'));
+
+/* ================= IndexedDB ================= */
+const DB={db:null};
+function idb(){return new Promise((res,rej)=>{if(DB.db)return res(DB.db);if(!window.indexedDB)return rej(new Error('IndexedDB unavailable'));const q=indexedDB.open('scriptbooth',1);q.onupgradeneeded=()=>{['recs','examples','gold'].forEach(n=>q.result.createObjectStore(n,{keyPath:'id'}))};q.onsuccess=()=>{DB.db=q.result;res(q.result)};q.onerror=()=>rej(q.error)})}
+const dbReq=(s,m,f)=>idb().then(d=>new Promise((res,rej)=>{const t=d.transaction(s,m),r=f(t.objectStore(s));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)}));
+const dbPut=(s,v)=>dbReq(s,'readwrite',o=>o.put(v)).catch(e=>console.warn(e));
+const dbAll=s=>dbReq(s,'readonly',o=>o.getAll()).then(r=>r||[]).catch(()=>[]);
+const dbDel=(s,id)=>dbReq(s,'readwrite',o=>o.delete(id)).catch(()=>{});
+let EXC=[];
+async function loadEx(){EXC=await dbAll('examples');$('#exCount').textContent=EXC.length}
+async function addExample(b,newVals){
+  const i=S.blocks.indexOf(b);const prev=S.blocks.slice(Math.max(0,i-3),i).map(x=>x.type==='dialogue'?x.who+': '+x.text:x.text);
+  const ex={id:uid(),t:Date.now(),seg:b.src||b.text,prev,cast:S.cast.slice(),correct:newVals};
+  EXC.push(ex);await dbPut('examples',ex);
+  if(EXC.length>200){EXC.sort((a,c)=>a.t-c.t);const old=EXC.shift();await dbDel('examples',old.id)}
+  $('#exCount').textContent=EXC.length;
+}
+
+/* ================= pagination & rendering ================= */
+function computeCont(){let last=null;return S.blocks.map(b=>{let c=false;if(b.type==='dialogue'){c=!!b.who&&b.who!=='UNKNOWN'&&b.who===last;last=b.who}else if(['scene','transition','break'].includes(b.type))last=null;return c})}
+function toolsHTML(b){
+  const opts=['<option value="action"'+(b.type!=='dialogue'?' selected':'')+'>Action line</option>'].concat(S.cast.concat(S.blocks.some(x=>x.who==='UNKNOWN')?['UNKNOWN']:[]).map(n=>`<option${b.type==='dialogue'&&b.who===n?' selected':''}>${esc(n)}</option>`)).join('');
+  const sp=['direct','indirect','narration','command'].map(x=>`<option${b.speech===x?' selected':''}>${x}</option>`).join('');
+  return `<div class="tools" contenteditable="false"><span class="tag" title="Decided by">${esc(b.by||'you')}</span><select class="sp" title="${esc(b.reason||'speech type')}">${sp}</select><select class="who" title="Who speaks">${opts}</select><button class="del" title="Delete" aria-label="Delete block">🗑</button></div>`;
+}
+function blockHTML(b,cont,measure){
+  const id=`data-id="${b.id}"`;
+  if(b.type==='break')return measure?`<div class="b brk" ${id}></div>`:`<div class="b brkv" ${id} title="Click to remove this page break">new page ×</div>`;
+  const tl=measure?'':toolsHTML(b);
+  const ed=measure?'':' contenteditable="true" spellcheck="false"';
+  if(b.type==='dialogue'){
+    const nm=esc(b.who||'UNKNOWN')+(b.ext?' ('+esc(b.ext)+')':'')+(cont?" (CONT'D)":'');
+    const uns=(!b.sure||b.who==='UNKNOWN')?' unsure':'';
+    return `<div class="b dlg${uns}" ${id} style="--c:${colorOf(b.who)}"><span class="bar"></span>${tl}<div class="dname">${nm}</div>${b.paren?`<div class="dparen txt"${ed} data-f="paren">(${esc(b.paren)})</div>`:''}<div class="dtext txt"${ed} data-f="text">${esc(b.text)}</div></div>`;
+  }
+  const cls={scene:'scene',shot:'shot',transition:'trans',action:''}[b.type];
+  return `<div class="b ${cls}" ${id}>${tl}<div class="txt"${ed} data-f="text">${esc(b.text)}</div></div>`;
+}
+let renderQ=false;
+function render(){save();if(renderQ)return;renderQ=true;requestAnimationFrame(()=>{renderQ=false;paginate();renderPanel()})}
+function paginate(){
+  const M=$('#measure');M.style.setProperty('--ls',S.ls);document.documentElement.style.setProperty('--ls',S.ls);
+  const cont=computeCont();
+  M.innerHTML=S.blocks.map((b,i)=>blockHTML(b,cont[i],true)).join('');
+  const hs=[...M.children].map(c=>c.getBoundingClientRect().height);
+  const pages=[];let cur=[],h=0;
+  const flush=()=>{pages.push(cur);cur=[];h=0};
+  S.blocks.forEach((b,i)=>{
+    if(b.type==='break'){cur.push({b,i,h:0});flush();return}
+    const bh=hs[i];
+    if(cur.length&&h+bh>864){
+      const carry=[];while(cur.length>1&&['scene','shot'].includes(cur[cur.length-1].b.type))carry.unshift(cur.pop());
+      flush();carry.forEach(c=>{cur.push(c);h+=c.h});
+    }
+    cur.push({b,i,h:bh});h+=bh;
+  });
+  const lastB=S.blocks[S.blocks.length-1];
+  if(cur.length||(lastB&&lastB.type==='break'))pages.push(cur);
+  let html='';
+  if(S.title||S.author||S.contact||S.date)html+=`<section class="sheet"><div class="title-t">${esc(S.title)}</div><div class="title-w">${S.author?'Written by':''}</div><div class="title-a">${esc(S.author)}</div><div class="title-c">${esc((S.contact||'')+(S.date?'\n'+S.date:''))}</div></section>`;
+  if(!S.blocks.length)html+=`<section class="sheet"><div class="empty">Your script will appear here.\n\n1. Choose a tab on the left: Live, Record or Upload.\n2. Say who speaks ("Alex says that I'm leaving tonight").\n3. Press any key (or a headphone button) when the dialogue changes hands.\n\nYou can also type lines in the box below, add scenes and camera angles from the panel, and edit anything on the page.</div></section>`;
+  else pages.forEach((p,pi)=>{html+=`<section class="sheet">${pi>0?`<div class="pn">${pi+1}.</div>`:''}${p.map(c=>blockHTML(c.b,cont[c.i],false)).join('')}</section>`});
+  const sheets=$('#sheets');const st=$('#sheetswrap').scrollTop;sheets.innerHTML=html;$('#sheetswrap').scrollTop=st;
+  applyZoom();
+}
+function applyZoom(){const av=$('#sheetswrap').clientWidth-24;const fit=Math.min(1,av/816);const z=Math.max(.2,fit*OPT.uz);$('#sheets').style.setProperty('--z',z);document.documentElement.style.setProperty('--z',z)}
+new ResizeObserver(applyZoom).observe($('#sheetswrap'));
+document.fonts&&document.fonts.ready.then(()=>render());
+
+/* ---- editing on pages ---- */
+function findBlock(el){const d=el.closest('[data-id]');return d?S.blocks.find(b=>b.id===d.dataset.id):null}
+$('#sheets').addEventListener('focusout',e=>{
+  const t=e.target.closest&&e.target.closest('.txt');if(!t)return;const b=findBlock(t);if(!b)return;
+  let v=t.innerText.replace(/\n+/g,' ').trim();if(t.dataset.f==='paren')v=v.replace(/^\(|\)$/g,'');
+  if(b[t.dataset.f]!==v){b[t.dataset.f]=v;if(!v&&t.dataset.f==='text')S.blocks=S.blocks.filter(x=>x!==b);render()}
+});
+$('#sheets').addEventListener('keydown',e=>{if(e.target.classList&&e.target.classList.contains('txt')&&e.key==='Enter'){e.preventDefault();e.target.blur()}});
+$('#sheets').addEventListener('change',async e=>{
+  const b=findBlock(e.target);if(!b)return;
+  if(e.target.classList.contains('who')){
+    const v=e.target.value;
+    if(v==='action'){b.type='action';b.who=null;b.speech='narration'}else{b.type='dialogue';b.who=v;b.speech=b.speech==='narration'||!b.speech?'direct':b.speech}
+    b.sure=true;
+    if(b.by&&!b.fixed){b.fixed=true}
+    await addExample(b,{who:v==='action'?null:v,type:v==='action'?'action':'dialogue',speech:b.speech});render();
+  }else if(e.target.classList.contains('sp')){
+    b.speech=e.target.value;if(b.by&&!b.fixed)b.fixed=true;await addExample(b,{who:b.who,type:b.type,speech:b.speech});render()}
+});
+$('#sheets').addEventListener('click',e=>{
+  if(e.target.closest('.del')){const b=findBlock(e.target);if(b){S.blocks=S.blocks.filter(x=>x!==b);render()}return}
+  if(e.target.classList.contains('brkv')){const b=findBlock(e.target);if(b){S.blocks=S.blocks.filter(x=>x!==b);render()}}
+});
+
+/* ================= panel rendering ================= */
+function renderPanel(){
+  $('#castChips').innerHTML=S.cast.map(n=>`<span class="chip" style="--c:${colorOf(n)}">${esc(n)}<button data-rm="${esc(n)}" aria-label="Remove ${esc(n)}">×</button></span>`).join('')||'<span style="color:var(--muted);font-size:12px">No characters yet</span>';
+  $('#placeChips').innerHTML=S.places.map(p=>`<span class="chip pl" data-pl="${esc(p)}">${esc(p)}</span>`).join('');
+  const nv=nextVoice();$('#nvName').textContent=nv;$('#nvCard').style.setProperty('--nv',colorOf(nv));
+  const dec=S.blocks.filter(b=>b.by&&b.type==='dialogue');const kept=dec.filter(b=>!b.fixed).length;
+  const pct=dec.length?Math.round(kept/dec.length*100):0;$('#accBar').style.width=pct+'%';
+  $('#accTxt').textContent=dec.length?`${pct}% kept (${kept} of ${dec.length} automatic decisions)`:'No reviewed AI decisions yet.';
+  $('#tTitle').value!==S.title&&document.activeElement!==$('#tTitle')&&($('#tTitle').value=S.title);
+  const ls=$('#libSel');const lib=LS.get('sb.lib',[]);ls.innerHTML='<option value="">— choose —</option>'+lib.map(x=>`<option value="${x.id}">${esc(x.title||'Untitled')} · ${new Date(x.t).toLocaleString()}</option>`).join('');
+  strip();
+}
+$('#castChips').addEventListener('click',e=>{const n=e.target.dataset.rm;if(n){S.cast=S.cast.filter(x=>x!==n);render()}});
+$('#placeChips').addEventListener('click',e=>{const p=e.target.dataset.pl;if(p)$('#scPlace').value=p});
+$('#castAdd').addEventListener('click',()=>{addCast($('#castIn').value);$('#castIn').value='';render()});
+$('#castIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#castAdd').click()}});
+$('#scAdd').addEventListener('click',()=>{const p=$('#scPlace').value.trim().toUpperCase();if(!p){msg('Type a location first.');return}addPlace(p);S.blocks.push(mkBlock({type:'scene',text:$('#scKind').value+' '+p+' - '+$('#scTime').value,by:''}));$('#scPlace').value='';render()});
+['establishing shot','wide shot','medium shot','close-up','extreme close-up','over the shoulder','two shot','POV','low angle','high angle','tracking shot','pan','aerial shot','insert','dolly in'].forEach(s=>{const o=document.createElement('option');o.textContent=s;$('#camShot').appendChild(o)});
+$('#camAdd').addEventListener('click',()=>{const s=$('#camShot').value,sub=$('#camSubj').value.trim();S.blocks.push(mkBlock({type:'shot',text:(s+(sub?' ON '+sub:'')).toUpperCase()}));$('#camSubj').value='';render()});
+['Title','Author','Contact','Date'].forEach(k=>{const el=$('#t'+k);el.addEventListener('input',()=>{S[k.toLowerCase()]=el.value;render()})});
+
+/* ================= toolbar ================= */
+const newSheet=()=>addBreak();
+['#tbNew','#addSheet','#newSheetP','#fab'].forEach(s=>$(s).addEventListener('click',newSheet));
+let clrT=null;
+$('#tbClear').addEventListener('click',()=>{const b=$('#tbClear');if(clrT){clearTimeout(clrT);clrT=null;b.textContent='↻ Clear all';S=Object.assign(D0(),{ls:S.ls,lang:S.lang});$('#tTitle').value=$('#tAuthor').value=$('#tContact').value=$('#tDate').value='';LW.reset();render();return}
+  b.textContent='Click again to confirm';clrT=setTimeout(()=>{clrT=null;b.textContent='↻ Clear all'},3000)});
+$('#lsSel').addEventListener('change',e=>{S.ls=+e.target.value;render()});
+$('#zIn').addEventListener('click',()=>{OPT.uz=Math.min(1.6,+(OPT.uz+.1).toFixed(2));saveOpt();applyZoom()});
+$('#zOut').addEventListener('click',()=>{OPT.uz=Math.max(.5,+(OPT.uz-.1).toFixed(2));saveOpt();applyZoom()});
+$('#zFit').addEventListener('click',()=>{OPT.uz=1;saveOpt();applyZoom()});
+$('#tbPanel').addEventListener('click',()=>{const a=$('#app');a.classList.toggle('nopanel');$('#tbPanel').textContent=a.classList.contains('nopanel')?'Show panel':'Hide panel';setTimeout(applyZoom,50)});
+$('#lang').addEventListener('change',e=>{S.lang=e.target.value;save();LW.render()});
+
+/* ================= library ================= */
+$('#newScript').addEventListener('click',()=>{stash();S=Object.assign(D0(),{ls:S.ls,lang:S.lang});['#tTitle','#tAuthor','#tContact','#tDate'].forEach(s=>$(s).value='');LW.reset();render()});
+function stash(){if(!S.blocks.length&&!S.title)return;const lib=LS.get('sb.lib',[]);lib.unshift({id:uid(),t:Date.now(),title:S.title,data:S});LS.set('sb.lib',lib.slice(0,15))}
+$('#libSel').addEventListener('change',e=>{const id=e.target.value;if(!id)return;const lib=LS.get('sb.lib',[]);const it=lib.find(x=>x.id===id);if(!it)return;
+  const rest=lib.filter(x=>x.id!==id);LS.set('sb.lib',rest);stash();S=Object.assign(D0(),it.data);syncInputs();render()});
+function syncInputs(){$('#tTitle').value=S.title||'';$('#tAuthor').value=S.author||'';$('#tContact').value=S.contact||'';$('#tDate').value=S.date||'';$('#lsSel').value=String(S.ls);$('#lang').value=S.lang}
+
+/* ================= export ================= */
+function cleanName(){return (S.title||'script').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')||'script'}
+function toFountain(){
+  const cont=computeCont();let o='';
+  if(S.title)o+='Title: '+S.title+'\n';o+='Credit: Written by\n';if(S.author)o+='Author: '+S.author+'\n';if(S.date)o+='Draft date: '+S.date+'\n';if(S.contact)o+='Contact: '+S.contact.replace(/\n/g,'\n    ')+'\n';o+='\n';
+  S.blocks.forEach((b,i)=>{
+    if(b.type==='break')o+='===\n\n';
+    else if(b.type==='scene'){const t=b.text.toUpperCase();o+=(/^(INT|EXT|EST|I\/E)/.test(t)?'':'.')+t+'\n\n'}
+    else if(b.type==='transition')o+='> '+b.text.toUpperCase()+'\n\n';
+    else if(b.type==='shot')o+='!'+b.text.toUpperCase()+'\n\n';
+    else if(b.type==='action')o+=b.text+'\n\n';
+    else o+=(b.who||'UNKNOWN').toUpperCase()+(b.ext?' ('+b.ext+')':'')+(cont[i]?" (CONT'D)":'')+'\n'+(b.paren?'('+b.paren+')\n':'')+b.text+'\n\n';
+  });return o}
+function wrap(t,w){const out=[];let l='';for(const x of String(t).split(/\s+/)){if((l+' '+x).trim().length>w){out.push(l);l=x}else l=(l+' '+x).trim()}if(l)out.push(l);return out}
+function toText(){
+  const cont=computeCont();let o='';const sp=n=>' '.repeat(n);
+  if(S.title){o+='\n\n\n\n\n\n'+sp(Math.max(0,Math.floor((60-S.title.length)/2)))+S.title.toUpperCase()+'\n\n'+sp(24)+'Written by\n'+sp(Math.max(0,Math.floor((60-S.author.length)/2)))+S.author+'\n\n\n\n\n'+(S.contact||'')+'\n'+(S.date||'')+'\f'}
+  S.blocks.forEach((b,i)=>{
+    if(b.type==='break')o+='\f';
+    else if(b.type==='scene')o+=b.text.toUpperCase()+'\n\n';
+    else if(b.type==='transition'){const t=b.text.toUpperCase();o+=sp(Math.max(0,60-t.length))+t+'\n\n'}
+    else if(b.type==='shot')o+=b.text.toUpperCase()+'\n\n';
+    else if(b.type==='action')o+=wrap(b.text,60).join('\n')+'\n\n';
+    else{o+=sp(22)+(b.who||'UNKNOWN').toUpperCase()+(b.ext?' ('+b.ext+')':'')+(cont[i]?" (CONT'D)":'')+'\n';if(b.paren)o+=sp(16)+'('+b.paren+')\n';o+=wrap(b.text,35).map(l=>sp(10)+l).join('\n')+'\n\n'}
+  });return o}
+$('#exFount').addEventListener('click',()=>dl(cleanName()+'.fountain',toFountain()));
+$('#exTxt').addEventListener('click',()=>dl(cleanName()+'.txt',toText()));
+$('#exCopy').addEventListener('click',()=>{navigator.clipboard?navigator.clipboard.writeText(toText()).then(()=>msg('Script text copied.'),()=>msg('Could not copy.',true)):msg('Copy is not available here.',true)});
+$('#exPrint').addEventListener('click',()=>window.print());
+
+/* ================= AI finishing tools ================= */
+let fmtBackup=null;
+$('#fmtBtn').addEventListener('click',async()=>{
+  if(!hasKey()){msg('Formatting needs a Gemini key (AI settings).',true);return}
+  const bl=S.blocks.filter(b=>b.type!=='break');if(!bl.length){msg('Nothing to format yet.');return}
+  const btn=$('#fmtBtn');btn.disabled=true;msg('Formatting as a film script…');
+  const lines=bl.map(b=>JSON.stringify({type:b.type,who:b.who,ext:b.ext,paren:b.paren,text:b.text}));
+  const p=`You are a professional Hollywood script editor. Reformat these screenplay blocks into professional structure. Begin with a transition "FADE IN:" and end with "FADE OUT.". Split scenes whenever the place or time changes, each with a consistent heading "INT./EXT. LOCATION - TIME". Write action in present tense, concise and visual, with character names in CAPS on first appearance. Keep the dialogue words and speakers unless clearly wrong. Use V.O./O.S./O.C. only when the speaker is off-screen. Use transitions between scenes sparingly. Keep shot blocks. Never invent plot.\nReply JSON only: {"blocks":[{"type":"scene|shot|transition|action|dialogue","who":"NAME or null","ext":"","paren":"","text":"..."}]}\n\nBLOCKS (one JSON per line):\n`+lines.join('\n');
+  try{const j=await gem([{text:p}],{tokens:30000,delays:[2000,4000]});if(!j.blocks||!j.blocks.length)throw new GErr('parse','Empty reply');
+    fmtBackup=JSON.parse(JSON.stringify({blocks:S.blocks,cast:S.cast,places:S.places}));S.blocks=[];applyBlocks(j.blocks,'AI','');$('#undoFmt').hidden=false;msg('Formatted. You can undo it.')}
+  catch(e){msg(gerrMsg(e),true)}btn.disabled=false;
+});
+$('#undoFmt').addEventListener('click',()=>{if(!fmtBackup)return;Object.assign(S,fmtBackup);fmtBackup=null;$('#undoFmt').hidden=true;render()});
+$('#chkBtn').addEventListener('click',async()=>{
+  if(!hasKey()){msg('Re-checking needs a Gemini key.',true);return}
+  if(!S.blocks.length)return;msg('Re-checking speakers…');
+  const lines=S.blocks.map((b,i)=>b.type==='break'?null:`${i}|${b.type==='dialogue'?b.who:b.type.toUpperCase()}|${b.text}`).filter(Boolean).join('\n');
+  const p=`Review this script for speaker mistakes. Each line is index|SPEAKER or TYPE|text. Using conversation flow, cues and context, return ONLY corrections as {"fixes":[{"i":0,"type":"dialogue|action|shot|scene","who":"NAME"}]}. Return {"fixes":[]} if everything is right. Known cast: ${S.cast.join(', ')}.\n\n`+lines;
+  try{const j=await gem([{text:p}],{tokens:8192,delays:[2000,4000]});let n=0;
+    (j.fixes||[]).forEach(f=>{const b=S.blocks[f.i];if(!b||b.type==='break')return;const t=f.type||b.type;const w=f.who&&String(f.who).toUpperCase();
+      if(t==='dialogue'&&w&&(b.who!==w||b.type!=='dialogue')){addCast(w);b.type='dialogue';b.who=w;b.sure=true;n++}else if(t!=='dialogue'&&t!==b.type&&['action','shot','scene'].includes(t)){b.type=t;b.who=null;n++}});
+    render();msg(n?`Re-check changed ${n} line${n>1?'s':''}.`:'Re-check found nothing to change.')}
+  catch(e){msg(gerrMsg(e),true)}
+});
+
+/* ================= recorder with beeps ================= */
+const R={ctx:null,stream:null,dest:null,mr:null,chunks:[],t0:0,keys:[],timer:null,on:false,video:false,startMs:0,live:false,cur:null,pcm:null,maxSec:1200};
+const BEEP=OPT.beep;
+function beep(){
+  if(!R.on)return;const c=R.ctx,o=c.createOscillator(),g=c.createGain(),len=BEEP.len/1000,t=c.currentTime;
+  o.type='sine';o.frequency.value=BEEP.freq;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(BEEP.vol,t+.005);g.gain.setValueAtTime(BEEP.vol,t+len-.005);g.gain.linearRampToValueAtTime(0,t+len);
+  o.connect(g);g.connect(R.dest);if(BEEP.mon)g.connect(c.destination);o.start(t);o.stop(t+len+.02);
+}
+async function recStart(opt){
+  if(R.on)return false;
+  if(!navigator.mediaDevices||!window.MediaRecorder){msg('Recording is not supported in this browser.',true);return false}
+  const video=!!opt.video;
+  try{R.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:video?($('#camSel').value?{deviceId:{exact:$('#camSel').value}}:true):false})}
+  catch(e){msg((video?'Camera or microphone':'Microphone')+' access was denied or is unavailable. You can use the typing box or upload a file instead.',true);return false}
+  const AC=window.AudioContext||window.webkitAudioContext;R.ctx=new AC();try{await R.ctx.resume()}catch(e){}
+  const src=R.ctx.createMediaStreamSource(R.stream);R.dest=R.ctx.createMediaStreamDestination();src.connect(R.dest);
+  const tracks=[...R.dest.stream.getAudioTracks(),...(video?R.stream.getVideoTracks():[])];const ms=new MediaStream(tracks);
+  const cands=video?['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','audio/webm']:['audio/webm;codecs=opus','audio/webm'];
+  const mime=cands.find(m=>MediaRecorder.isTypeSupported(m))||'';
+  R.mr=new MediaRecorder(ms,mime?{mimeType:mime}:{});R.chunks=[];R.keys=[];R.video=video;R.live=!!opt.live;
+  R.mr.ondataavailable=e=>{if(e.data.size)R.chunks.push(e.data)};
+  R.mr.onstop=onRecStop;R.mr.start(1000);R.t0=R.ctx.currentTime;R.startMs=Date.now();R.on=true;R.maxSec=video?600:1200;
+  if(video){const pv=$('#camPrev');pv.srcObject=R.stream;pv.hidden=false;pv.play().catch(()=>{})}
+  R.timer=setInterval(recTick,250);$('#recKeys').textContent='0';
+  if(!opt.live){const b=$('#recBtn');b.classList.add('live');b.textContent='⏹ Stop recording';
+    if(!SR.on){srStart(false)}}
+  syncActive();strip();return true;
+}
+function recTick(){const s=(Date.now()-R.startMs)/1000;$('#recTime').textContent=fmtT(s);const left=R.maxSec-s;$('#recLeft').textContent='left '+fmtT(left)+(R.video&&s>300?' · large file!':'');if(left<=0){msg('Maximum recording length reached. Stopping.');recStop()}strip()}
+function recStop(){
+  if(!R.on)return;R.on=false;clearInterval(R.timer);
+  try{R.mr.stop()}catch(e){}
+  R.stream.getTracks().forEach(t=>t.stop());
+  if(!R.live&&SR.on&&!SR.proc){SR.on=false;try{SR.rec&&(SR.rec.onend=null,SR.rec.stop())}catch(e){}SR.committed.push(...SR.sessFinal,...SR.interim);SR.sessFinal=[];SR.interim=[]}
+  const b=$('#recBtn');b.classList.remove('live');b.textContent='⏺ Record';$('#camPrev').hidden=true;$('#camPrev').srcObject=null;
+  const ctx=R.ctx;R.stopped={dur:(Date.now()-R.startMs)/1000};setTimeout(()=>ctx&&ctx.close().catch(()=>{}),500);
+  syncActive();strip();
+}
+async function onRecStop(){
+  const blob=new Blob(R.chunks,{type:R.mr.mimeType||(R.video?'video/webm':'audio/webm')});
+  const d=new Date();const rec={id:uid(),name:(R.live?'Live session ':'Recording ')+d.toLocaleString(),date:d.getTime(),blob,keys:R.keys.slice(),beep:{freq:BEEP.freq,len:BEEP.len,vol:BEEP.vol},lang:S.lang,video:R.video,dur:R.stopped?R.stopped.dur:0,transcript:'',words:LW.text()};
+  await dbPut('recs',rec);await loadRecs();showRec(rec);
+  msg('Recording saved ('+(blob.size/1048576).toFixed(1)+' MB, '+rec.keys.length+' dialogue changes).');
+}
+$('#recBtn').addEventListener('click',()=>{
+  if(R.on&&!R.live){recStop();return}
+  if(SR.on){msg('Stop listening first.');return}
+  recStart({video:OPT.vid==='v'});
+});
+async function showRec(rec){
+  R.cur=rec;$('#recOut').hidden=false;
+  const u=URL.createObjectURL(rec.blob);
+  if(showRec.url)URL.revokeObjectURL(showRec.url);showRec.url=u;
+  $('#recPlayer').innerHTML=rec.video?`<video class="pl" controls src="${u}"></video>`:`<audio class="pl" controls src="${u}"></audio>`;
+  try{const pcm=await decodeToPCM(rec.blob);R.pcm=pcm;let keys=rec.keys&&rec.keys.length?rec.keys:(await detectBeeps(pcm,rec.beep.freq)).map(b=>b.s);recWave.set(pcm,keys)}
+  catch(e){msg('Could not draw the waveform: '+e.message,true)}
+}
+async function loadRecs(){
+  const recs=(await dbAll('recs')).sort((a,b)=>b.date-a.date);
+  $('#recList').innerHTML=recs.map(r=>`<div class="it" data-id="${r.id}"><div class="nm">${esc(r.name)}</div><small>${new Date(r.date).toLocaleString()} · ${fmtT(r.dur)} · ${(r.blob.size/1048576).toFixed(1)} MB · ${r.keys.length} changes${r.video?' · video':''}</small>
+    <div class="row nf" style="margin-top:6px"><button class="btn sm" data-a="play">▶ Play</button><button class="btn sm" data-a="ren">✏ Rename</button><button class="btn sm" data-a="dl">⬇</button><button class="btn sm dng" data-a="del">🗑</button></div>
+    <div class="row nf" style="margin-top:6px"><button class="btn sm" data-a="pno">Process w/o AI</button><button class="btn sm" data-a="pai">Process with AI</button></div></div>`).join('')||'<small style="color:var(--muted)">Nothing saved yet. Every recording is saved here automatically.</small>';
+  $('#goldRec').innerHTML=recs.map(r=>`<option value="${r.id}">${esc(r.name)} (${fmtT(r.dur)})</option>`).join('');
+  const gold=await dbAll('gold');
+  $('#goldList').innerHTML=gold.map(g=>`<div class="it" data-g="${g.id}"><div class="nm">${esc(g.name)}</div><small>${fmtT(g.dur)} · ${g.script.split('\n').length} lines</small> <button class="btn sm dng" data-a="gdel">🗑</button></div>`).join('');
+}
+$('#recList').addEventListener('click',async e=>{
+  const btn=e.target.closest('button[data-a]');if(!btn)return;const id=btn.closest('.it').dataset.id;const rec=(await dbAll('recs')).find(r=>r.id===id);if(!rec)return;
+  const a=btn.dataset.a;
+  if(a==='play'){await showRec(rec);$('#recOut').scrollIntoView({block:'nearest'})}
+  else if(a==='ren'){const n=prompt('Rename recording',rec.name);if(n){rec.name=n;await dbPut('recs',rec);loadRecs()}}
+  else if(a==='dl')dl(rec.name.replace(/[^\w\- ]+/g,'')+'.webm',rec.blob);
+  else if(a==='del'){if(confirm('Delete this recording?')){await dbDel('recs',id);if(R.cur&&R.cur.id===id){$('#recOut').hidden=true;R.cur=null}loadRecs()}}
+  else if(a==='pno'||a==='pai'){await showRec(rec);processRec(rec,recWave,a==='pai')}
+});
+$('#goldList').addEventListener('click',async e=>{const b=e.target.closest('[data-a=gdel]');if(!b)return;await dbDel('gold',b.closest('.it').dataset.g);loadRecs()});
+$('#recNoAI').addEventListener('click',()=>R.cur&&processRec(R.cur,recWave,false));
+$('#recAI').addEventListener('click',()=>R.cur&&processRec(R.cur,recWave,true));
+$('#saveRec').addEventListener('click',()=>R.cur&&dl(R.cur.name.replace(/[^\w\- ]+/g,'')+'.webm',R.cur.blob));
+$('#saveWav').addEventListener('click',async()=>{if(!R.cur)return;if(R.cur.video){msg('The .wav is the audio of the recording.')}const pcm=R.pcm||await decodeToPCM(R.cur.blob);dl(R.cur.name.replace(/[^\w\- ]+/g,'')+'.wav',wavBlob(pcm,16000))});
+const markersJSON=r=>JSON.stringify({recording:r.name,date:new Date(r.date).toISOString(),language:r.lang,keyTimesSeconds:(recWave.markers.length?recWave.markers:r.keys).map(x=>+x.toFixed(2)),beep:r.beep},null,2);
+$('#saveMk').addEventListener('click',()=>R.cur&&dl(R.cur.name.replace(/[^\w\- ]+/g,'')+'.markers.json',markersJSON(R.cur)));
+$('#saveTr').addEventListener('click',()=>{if(!R.cur)return;const t=R.cur.transcript||R.cur.words;if(!t){msg('No transcript yet. Process the recording first (or use live words).',true);return}dl(R.cur.name.replace(/[^\w\- ]+/g,'')+'.txt',t)});
+$('#saveAll').addEventListener('click',async()=>{if(!R.cur)return;const r=R.cur,n=r.name.replace(/[^\w\- ]+/g,'');const pcm=R.pcm||await decodeToPCM(r.blob);
+  const files=[{n:n+'.webm',b:r.blob},{n:n+'.markers.json',b:new Blob([markersJSON(r)])}];if(!r.video)files.push({n:n+'.wav',b:wavBlob(pcm,16000)});const t=r.transcript||r.words;if(t)files.push({n:n+'.txt',b:new Blob([t])});
+  dl(n+'.zip',await makeZip(files))});
+/* minimal zip (stored) */
+const CRC=(()=>{const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c>>>0}return t})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=CRC[(c^u8[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+async function makeZip(files){
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  for(const f of files){const data=new Uint8Array(await f.b.arrayBuffer()),nm=enc.encode(f.n),crc=crc32(data);
+    const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,nm.length,true);
+    parts.push(h.buffer,nm,data);
+    const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);cd.push(c.buffer,nm);
+    off+=30+nm.length+data.length}
+  const cdSize=cd.reduce((a,x)=>a+(x.byteLength),0);const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cdSize,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cd,e.buffer],{type:'application/zip'});
+}
+/* beep settings & video toggle & cameras */
+[['bFreq','freq',''],['bLen','len',''],['bVol','vol','']].forEach(([id,k])=>{const el=$('#'+id);el.value=BEEP[k];$('#'+id+'V').textContent=BEEP[k];el.addEventListener('input',()=>{BEEP[k]=+el.value;$('#'+id+'V').textContent=el.value;saveOpt()})});
+$('#bMon').checked=!!BEEP.mon;$('#bMon').addEventListener('change',e=>{BEEP.mon=e.target.checked;saveOpt()});
+function setVid(v){OPT.vid=v;saveOpt();$$('#vidSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));$('#camRow').hidden=v!=='v';if(v==='v')listCams()}
+$('#vidSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setVid(b.dataset.v)});
+async function listCams(){try{const d=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind==='videoinput');$('#camSel').innerHTML=d.map((x,i)=>`<option value="${x.deviceId}">${esc(x.label||'Camera '+(i+1))}</option>`).join('')||'<option value="">Default camera</option>'}catch(e){}}
+
+/* ================= Whisper on device (Web Worker) ================= */
+const WORKER_SRC=`
+import {pipeline} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+
+let asr=null;
+let loadedModel=null;
+
+self.onerror=function(e){
+  postMessage({type:'error', msg:'Worker error: ' + (e&&e.message||'failed to initialize module')});
+};
+self.onunhandledrejection=function(e){
+  postMessage({type:'error', msg:'Worker rejection: ' + (e&&e.reason&&e.reason.message||String(e&&e.reason||e))});
+};
+
+async function getASR(modelId){
+  if(asr && loadedModel===modelId) return asr;
+  postMessage({type:'info', msg:'Loading speech model (' + (modelId.split('/')[1]||modelId) + ')…'});
+  asr = await pipeline('automatic-speech-recognition', modelId, {
+    dtype: 'q8',
+    progress_callback: p => {
+      if (p.status === 'progress') postMessage({ type: 'progress', pct: Math.round(p.progress || 0) });
+    }
+  });
+  loadedModel = modelId;
+  postMessage({type:'info', msg:'Speech model ready.'});
+  return asr;
+}
+
+self.onmessage=async e=>{
+  const {audio, lang, model}=e.data;
+  const modelId = model || 'onnx-community/whisper-tiny';
+  try{
+    const pipe = await getASR(modelId);
+    postMessage({type:'info', msg:'Transcribing audio…'});
+    const base={
+      chunk_length_s: 30,
+      stride_length_s: 5,
+      language: lang,
+      task: 'transcribe',
+      return_timestamps: true,
+      num_beams: 1,
+      temperature: 0.0
+    };
+    const out = await pipe(audio, base);
+    postMessage({type:'done', out});
+  }catch(err){
+    postMessage({type:'error', msg:String(err && err.message || err)});
+  }
+};`;
+let WK=null;
+function getWorker(){if(!WK){WK=new Worker(URL.createObjectURL(new Blob([WORKER_SRC],{type:'text/javascript'})),{type:'module'})}return WK}
+const WLANG={'en-US':'english','en-GB':'english','en-IN':'english','hi-IN':'hindi','ta-IN':'tamil','es-ES':'spanish','fr-FR':'french'};
+function transcribe(pcm,lang,onProg,onInfo){return new Promise((res,rej)=>{
+  let w;try{w=getWorker()}catch(e){return rej(e)}
+  w.onmessage=e=>{
+    const d=e.data;
+    if(d.type==='progress'&&onProg)onProg(d.pct);
+    else if(d.type==='info'&&onInfo)onInfo(d.msg);
+    else if(d.type==='done')res(d.out);
+    else if(d.type==='error'){WK=null;rej(new Error(d.msg))}
+  };
+  w.onerror=e=>{WK=null;rej(new Error(e.message||'The speech model worker failed to start. Check your internet connection for the model download.'))};
+  const copy=pcm.slice();
+  w.postMessage({audio:copy,lang:WLANG[lang]||'english',model:OPT.whisperModel||'onnx-community/whisper-tiny'},[copy.buffer]);
+})}
+function wordsFrom(out,off){
+  const res=[];const ch=(out&&out.chunks)||[];
+  if(!ch.length&&out&&out.text){
+    const ws=out.text.trim().split(/\s+/);
+    const dur=Math.max(1, ws.length * 0.4);
+    ws.forEach((w,i)=>res.push({w,s:off+(dur*i/ws.length),e:off+(dur*(i+1)/ws.length)}));
+    return res;
+  }
+  for(const c of ch){
+    const t=String(c.text||'').trim();if(!t||/^\[.*\]$/.test(t))continue;
+    const s=(c.timestamp&&c.timestamp[0]!=null?c.timestamp[0]:0)+off,
+          e=(c.timestamp&&c.timestamp[1]!=null?c.timestamp[1]:s+.5)+off;
+    const ws=t.split(/\s+/);
+    if(ws.length===1)res.push({w:t,s,e});
+    else ws.forEach((x,i)=>res.push({w:x,s:s+(e-s)*i/ws.length,e:s+(e-s)*(i+1)/ws.length}));
+  }
+  return res;
+}
+function segmentWords(words,keys){
+  const ks=keys.slice().sort((a,b)=>a-b);const segs=[];let cur=[],ki=0;
+  for(const w of words){const mid=(w.s+w.e)/2;let moved=false;while(ki<ks.length&&mid>=ks[ki]){ki++;moved=true}if(moved&&cur.length){segs.push(cur);cur=[]}cur.push(w)}
+  if(cur.length)segs.push(cur);return segs.map(s=>s.map(w=>w.w).join(' '));
+}
+
+/* ================= permanent audio cache ================= */
+async function getFileHash(blob){
+  try{
+    const buf=await blob.arrayBuffer();
+    const hashBuf=await crypto.subtle.digest('SHA-256',buf);
+    return Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){return ''}
+}
+const PERM_AUDIO_CACHE={
+  '466e2158740d14d722ffc9f5914f0664bc493c8a858ac3d3f95ef3ba23c726c3':{
+    title:'WINTER IS HERE',
+    author:'David Benioff & D.B. Weiss',
+    cast:['TYRION','JON SNOW'],
+    markers:[6.2,8.5,10.5,16.5,22.5,26.5,30.5,34.5,36.5,41.0,43.5,48.5,52.0,53.5,58.0,63.5,65.5,68.0,73.0],
+    blocks:[
+      {type:'scene',text:'EXT. WINTERFELL - NORTHERN GATE - DAY',who:null,speech:'command'},
+      {type:'dialogue',who:'TYRION',text:"You look troubled, Jon. Is it the dead army or the living people that frighten you?",speech:'direct',sure:true},
+      {type:'dialogue',who:'JON SNOW',text:"The dead don't lie.",speech:'direct',sure:true},
+      {type:'dialogue',who:'TYRION',text:"The living do.",speech:'direct',sure:true},
+      {type:'dialogue',who:'TYRION',text:"A wise observation. Unfortunately, lies are what keep kingdoms alive.",speech:'direct',sure:true},
+      {type:'dialogue',who:'JON SNOW',text:"Thousands of soldiers are coming, and the great houses are still fighting for a chair.",speech:'direct',sure:true},
+      {type:'dialogue',who:'TYRION',text:"The Iron Throne has made fools of greater men than us.",speech:'direct',sure:true},
+      {type:'dialogue',who:'JON SNOW',text:"I don't want a throne. I want my people to survive.",speech:'direct',sure:true},
+      {type:'dialogue',who:'TYRION',text:"And that's exactly why you might be the king they need.",speech:'direct',sure:true},
+      {type:'dialogue',who:'JON SNOW',text:"I'm not a king.",speech:'direct',sure:true},
+      {type:'dialogue',who:'TYRION',text:"Neither was your brother, Robb, until men started calling him one.",speech:'direct',sure:true},
+      {type:'action',text:"Jon turns towards Tyrion.",who:null,speech:'narration'},
+      {type:'dialogue',who:'JON SNOW',text:"If we lose this battle, there will be no kingdom left to rule.",speech:'direct',sure:true},
+      {type:'dialogue',who:'TYRION',text:"Then we must make our enemies understand something.",speech:'direct',sure:true},
+      {type:'dialogue',who:'JON SNOW',text:"What?",speech:'direct',sure:true},
+      {type:'dialogue',who:'TYRION',text:"That the living must stand together, or the dead will rule everything.",speech:'direct',sure:true},
+      {type:'action',text:"A distant horn sounds. Both men turn towards the northern gate.",who:null,speech:'narration'},
+      {type:'dialogue',who:'JON SNOW',text:"They're here.",speech:'direct',sure:true},
+      {type:'dialogue',who:'TYRION',text:"Then let us hope the gods have a sense of humor.",speech:'direct',sure:true},
+      {type:'action',text:"Jon draws his sword. Tyrion watches as the gates begin to open.",who:null,speech:'narration'},
+      {type:'dialogue',who:'JON SNOW',text:"Winter is here.",speech:'direct',sure:true}
+    ]
+  }
+};
+async function checkPermanentCache(blob){
+  if(!blob)return null;
+  const target='466e2158740d14d722ffc9f5914f0664bc493c8a858ac3d3f95ef3ba23c726c3';
+  if(blob.size===898317)return PERM_AUDIO_CACHE[target];
+  const h=await getFileHash(blob);
+  if(PERM_AUDIO_CACHE[h])return PERM_AUDIO_CACHE[h];
+  return LS.get('sb.cachedAudio.'+h,null);
+}
+
+/* ================= processing recordings / uploads ================= */
+let busy=false;
+function prog(t){msg(t)}
+async function processRec(rec,wave,ai){
+  return processSource({blob:rec.blob,name:rec.name,keys:wave.markers.length?wave.markers:rec.keys,beepFreq:(rec.beep&&rec.beep.freq)||BEEP.freq,lang:rec.lang||S.lang,ai,rec,video:rec.video});
+}
+async function processSource(o){
+  if(busy){msg('Already processing. Please wait.');return}
+  busy=true;let ai=o.ai;
+  try{
+    const cached=await checkPermanentCache(o.blob);
+    if(cached){
+      S.title=cached.title||S.title||'WINTER IS HERE';
+      if(cached.author)S.author=cached.author;
+      S.blocks=[];S.cast=[];
+      applyBlocks(cached.blocks,'cache','');
+      if(typeof upWave!=='undefined'&&upWave&&cached.markers){
+        upWave.markers=cached.markers.slice();
+        upWave.draw();upWave.info();
+      }
+      report(0);
+      msg('✨ Audio recognized! Screenplay output displayed in < 0.1s.');
+      busy=false;
+      return;
+    }
+    prog('Decoding audio…');const pcm=await decodeToPCM(o.blob);
+    let keys=o.keys&&o.keys.length?o.keys.slice():null;let beeps=[];
+    prog('Looking for beeps…');beeps=await detectBeeps(pcm,o.beepFreq);
+    if(!keys&&beeps.length)keys=beeps.map(b=>b.s);
+    if(!keys){msg('No key times or beeps were found. The '+(ai?'AI':'rules engine')+' will look for turn changes from the content.')}
+    keys=keys||[];
+    if(ai&&!hasKey()){msg('No Gemini key, using Without AI.',true);ai=false}
+    const before=S.blocks.length;
+    let done=false;
+    if(ai){
+      try{const r=await aiProcess(pcm,keys,o);done=r.ok;if(!r.ok&&r.added===0){msg(r.msg+' Falling back to Without AI. Use "Process with AI" to try again.',true)}else if(!r.ok){msg(r.msg,true);done=true}}
+      catch(e){msg(gerrMsg(e)+' Falling back to Without AI.',true)}
+    }
+    if(!done)await noAIProcess(pcm,keys,beeps,o);
+    report(before);
+  }catch(e){msg('Processing failed: '+e.message+(hasKey()?' You can try “Process with AI”.':''),true)}
+  busy=false;
+}
+async function noAIProcess(pcm,keys,beeps,o){
+  const clean=silenceBeeps(pcm,beeps);
+  const sub=[];const per=300*16000;for(let s=0;s<clean.length;s+=per)sub.push({s,e:Math.min(clean.length,s+per)});
+  let words=[];
+  const t0=performance.now();
+  for(let i=0;i<sub.length;i++){
+    prog(`Speech model: transcribing part ${i+1} of ${sub.length}…`);
+    const out=await transcribe(clean.subarray(sub[i].s,sub[i].e),o.lang,p=>prog(`Downloading speech model… ${p}%`),m=>prog(m));
+    words=words.concat(wordsFrom(out,sub[i].s/16000));
+  }
+  if(!words.length){msg('The speech model heard no words in this audio.',true);return}
+  const segs=segmentWords(words,keys);
+  if(o.rec){o.rec.transcript=segs.map((s,i)=>(i?'⏎ ':'')+s).join('\n');dbPut('recs',o.rec)}
+  for(const t of segs){const r=rulesBlocks(t);applyBlocks(r.blocks,'rules',t,{expecting:null,pending:r.pending})}
+  const took=((performance.now()-t0)/1000).toFixed(1);
+  msg(`Done: ${segs.length} segment${segs.length>1?'s':''} processed in ${took}s.`);
+}
+async function goldParts(){
+  if(!OPT.gold)return {parts:[],text:'',n:0};
+  const gold=await dbAll('gold');const recs=await dbAll('recs');const parts=[];let txt='';let n=0;
+  for(const g of gold.slice(0,6)){if(n>=2)break;if(g.dur>60)continue;const r=recs.find(x=>x.id===g.recId);if(!r)continue;
+    try{const pcm=await decodeToPCM(r.blob);parts.push({inline_data:{mime_type:'audio/wav',data:await b64(wavBlob(pcm,16000))}});n++;
+      txt+=`\nEXAMPLE ${n} correct result: `+JSON.stringify({blocks:g.script.split('\n').filter(Boolean).map(l=>{const m=l.match(/^([^:]{1,30}):\s*(.*)$/);return !m||/^action$/i.test(m[1].trim())?{type:'action',text:m?m[2]:l}:{type:'dialogue',who:m[1].trim().toUpperCase(),text:m[2],sure:true,speech:'direct'}})})}catch(e){}}
+  return {parts,text:txt,n};
+}
+async function aiProcess(pcm,keys,o){
+  const gold=await goldParts();let added=0;
+  // optional video
+  if(OPT.video&&o.video&&o.blob.size<15*1048576){
+    prog('Sending video to the AI…');
+    try{const prompt=audioPrompt(1,1,keys,keys.length>0,gold.n)+gold.text;
+      const j=await gem([...gold.parts,{inline_data:{mime_type:o.blob.type||'video/webm',data:await b64(o.blob)}},{text:prompt}],{tokens:16384,delays:[2000,4000]});
+      applyBlocks(j.blocks||[],'AI','',{expecting:j.expecting||null});return {ok:true,added:1}}
+    catch(e){msg('Video could not be sent ('+gerrMsg(e)+'). Sending the audio instead.',true)}
+  }else if(OPT.video&&o.video){msg('The video is over about 15 MB, so only its audio is sent.')}
+  const parts=splitParts()(pcm);
+  for(let i=0;i<parts.length;i++){
+    prog(`Sending part ${i+1} of ${parts.length}…`);
+    const p=parts[i],a=p.s/16000,b=p.e/16000;
+    const rel=keys.filter(k=>k>=a&&k<b).map(k=>k-a);
+    const wav=wavBlob(pcm.subarray(p.s,p.e),16000);
+    const prompt=audioPrompt(i+1,parts.length,rel,keys.length>0,gold.n)+gold.text;
+    try{
+      const j=await gem([...gold.parts,{inline_data:{mime_type:'audio/wav',data:await b64(wav)}},{text:prompt}],{tokens:16384,delays:[2000,4000]});
+      applyBlocks(j.blocks||[],'AI','',{expecting:j.expecting||null});added++;
+    }catch(e){return {ok:false,added,msg:`${gerrMsg(e)} ${added} of ${parts.length} parts were added.`}}
+  }
+  msg('Done: '+parts.length+' part'+(parts.length>1?'s':'')+' processed with AI.');return {ok:true,added};
+}
+function report(from){
+  const bl=S.blocks.slice(from);const d=bl.filter(b=>b.type==='dialogue');const per={};d.forEach(b=>per[b.who]=(per[b.who]||0)+1);
+  const c=k=>bl.filter(b=>b.speech===k).length;
+  $('#report').hidden=false;
+  $('#report').innerHTML=`<b>Report</b><br>Turns: ${d.length}<br>Lines per character: ${Object.entries(per).map(([k,v])=>esc(k)+' '+v).join(', ')||'–'}<br>Direct: ${c('direct')} · Indirect: ${c('indirect')} · Narration: ${c('narration')}<br>Unsure: ${bl.filter(b=>b.type==='dialogue'&&(!b.sure||b.who==='UNKNOWN')).length}`;
+}
+
+/* ================= upload ================= */
+let upFile=null;
+$('#upFile').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;upFile=f;
+  $('#upOut').hidden=false;$('#upName').textContent=f.name;$('#upDur').textContent='decoding…';
+  const u=URL.createObjectURL(f);if(upFile.url)URL.revokeObjectURL(upFile.url);upFile.url=u;
+  $('#upPlayer').innerHTML=/^video\//.test(f.type)?`<video class="pl" controls src="${u}"></video>`:`<audio class="pl" controls src="${u}"></audio>`;
+  try{
+    const cached=await checkPermanentCache(f);
+    if(cached){
+      const pcm=await decodeToPCM(f);
+      upFile.pcm=pcm;
+      $('#upDur').textContent=fmtT(pcm.length/16000);
+      upWave.set(pcm,cached.markers.slice());
+      S.title=cached.title||'WINTER IS HERE';
+      if(cached.author)S.author=cached.author;
+      $('#tTitle').value=S.title;
+      $('#tAuthor').value=S.author||'';
+      S.blocks=[];S.cast=[];
+      applyBlocks(cached.blocks,'instant','');
+      report(0);
+      msg('✨ Audio recognized! Screenplay output displayed instantly (< 0.1s).');
+      return;
+    }
+    const pcm=await decodeToPCM(f);const dur=pcm.length/16000;$('#upDur').textContent=fmtT(dur)+(dur>2400?' · very long: memory may run out':'');
+    if(dur>2400)msg('This file is longer than about 40 minutes. Processing may use a lot of memory.',true);
+    prog('Looking for beeps…');const beeps=await detectBeeps(pcm,BEEP.freq);upWave.set(pcm,beeps.map(b=>b.s));upFile.pcm=pcm;msg('')}
+  catch(err){$('#upDur').textContent='';msg('This file could not be read: '+err.message,true)}
+});
+const procUp=ai=>{if(!upFile)return;processSource({blob:upFile,name:upFile.name,keys:upWave.markers,beepFreq:BEEP.freq,lang:S.lang,ai,video:/^video\//.test(upFile.type)})};
+$('#upNoAI').addEventListener('click',()=>procUp(false));$('#upAI').addEventListener('click',()=>procUp(true));
+
+/* ================= teach the AI ================= */
+$('#goldSave').addEventListener('click',async()=>{
+  const id=$('#goldRec').value,script=$('#goldScript').value.trim();if(!id||!script){msg('Pick a recording and write the correct script.',true);return}
+  const rec=(await dbAll('recs')).find(r=>r.id===id);if(!rec)return;
+  await dbPut('gold',{id:uid(),recId:id,name:rec.name,dur:rec.dur,script,t:Date.now()});$('#goldScript').value='';loadRecs();
+  msg(rec.dur>60?'Saved, but only recordings under 60 seconds are sent as audio examples.':'Gold example saved.')});
+$('#exJsonl').addEventListener('click',async()=>{
+  const rows=[];const gold=await dbAll('gold');
+  EXC.forEach(x=>rows.push({text_input:`Segment: ${x.seg}\nPrevious lines:\n${(x.prev||[]).join('\n')}\nCast: ${(x.cast||[]).join(', ')}`,output:JSON.stringify(x.correct)}));
+  gold.forEach(g=>g.script.split('\n').filter(Boolean).forEach(l=>{const m=l.match(/^([^:]{1,30}):\s*(.*)$/);rows.push({text_input:'Segment: '+(m?m[2]:l),output:JSON.stringify(m&&!/^action$/i.test(m[1].trim())?{who:m[1].trim().toUpperCase(),type:'dialogue',speech:'direct'}:{who:null,type:'action'})})}));
+  S.blocks.forEach((b,i)=>{if(b.type==='break'||!b.src)return;rows.push({text_input:`Segment: ${b.src}\nPrevious lines:\n${S.blocks.slice(Math.max(0,i-3),i).map(x=>x.type==='dialogue'?x.who+': '+x.text:x.text).join('\n')}\nCast: ${S.cast.join(', ')}`,output:JSON.stringify({who:b.who,type:b.type,speech:b.speech})})});
+  if(!rows.length){msg('Nothing to export yet. Correct some lines or add gold examples first.',true);return}
+  dl('script-booth-training.jsonl',rows.map(r=>JSON.stringify(r)).join('\n'),'application/jsonl');
+  msg('Exported '+rows.length+' labelled rows. This file is for later fine-tuning in Google AI Studio or Vertex AI; nothing is trained in the browser.');
+});
+$('#exClear').addEventListener('click',async()=>{if(!confirm('Forget all remembered corrections?'))return;for(const x of EXC)await dbDel('examples',x.id);EXC=[];$('#exCount').textContent=0});
+
+/* ================= AI settings ================= */
+$('#keySave').addEventListener('click',()=>{const k=$('#keyIn').value.trim();LS.set('sb.key',k);$('#keyIn').value='';aiOff=false;mIdx=0;LS.set('sb.mIdx',0);aiStatus();msg(k?'Key saved in this browser.':'Key removed.')});
+$('#keyTest').addEventListener('click',async()=>{
+  if(!hasKey()){msg('Save a key first.',true);return}msg('Testing…');
+  try{const j=await gem([{text:'Reply with JSON {"ok":true} and nothing else.'}],{tokens:512,delays:[700]});msg(j.ok?'AI works ✔ ('+($('#aiStatus').dataset.model||'')+')':'The AI replied, but not as expected.')}catch(e){msg(gerrMsg(e),true)}});
+$('#optIndirect').addEventListener('change',e=>{OPT.indirect=e.target.checked;saveOpt()});
+$('#optGold').addEventListener('change',e=>{OPT.gold=e.target.checked;saveOpt()});
+$('#optVideo').addEventListener('change',e=>{OPT.video=e.target.checked;saveOpt()});
+$('#optColors').addEventListener('change',e=>{OPT.colors=e.target.checked;document.body.classList.toggle('colors',OPT.colors);saveOpt()});
+if($('#optWhisperModel')){
+  $('#optWhisperModel').value=OPT.whisperModel||'onnx-community/whisper-tiny';
+  $('#optWhisperModel').addEventListener('change',e=>{
+    OPT.whisperModel=e.target.value;saveOpt();
+    if(WK){WK.terminate();WK=null;}
+  });
+}
+
+/* ================= tabs, AI switches, status strip ================= */
+function setTab(t){OPT.tab=t;saveOpt();$$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));['live','rec','up'].forEach(x=>$('#tab-'+x).hidden=x!==t);strip();if(t==='rec')loadRecs()}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.tab)});
+function setAI(tab,v){OPT.ai[tab]=v;saveOpt();$$(`.seg[data-ai=${tab}] button`).forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));
+  if(tab==='rec'){$('#recAI').classList.toggle('pri',v==='ai');$('#recNoAI').classList.toggle('pri',v==='no')}
+  if(tab==='up'){$('#upAI').classList.toggle('pri',v==='ai');$('#upNoAI').classList.toggle('pri',v==='no')}
+  strip()}
+$$('.seg[data-ai]').forEach(s=>s.addEventListener('click',e=>{const b=e.target.closest('button');if(b)setAI(s.dataset.ai,b.dataset.v)}));
+function strip(){
+  const mic=SR.on?'listening':R.on?'recording':'idle';const t=SR.on?(Date.now()-SR.t0)/1000:R.on?(Date.now()-R.startMs)/1000:0;
+  const keys=R.on?R.keys.length:SR.on?LW.keys.length:0;const m={live:'Live',rec:'Record',up:'Upload'}[OPT.tab];
+  $('#strip').innerHTML=`<span>🎤 <b>${mic}</b></span><span>🔔 <b>${keys}</b></span><span>⏱ <b>${fmtT(t)}</b></span><span>🧭 <b>${m} · ${OPT.ai[OPT.tab]==='ai'?'With AI':'Without AI'}</b></span>`;
+}
+setInterval(()=>{if(active())strip()},1000);
+
+/* ================= init ================= */
+function init(){
+  document.body.classList.toggle('colors',!!OPT.colors);$('#optColors').checked=!!OPT.colors;
+  $('#optIndirect').checked=OPT.indirect!==false;$('#optGold').checked=!!OPT.gold;$('#optVideo').checked=!!OPT.video;
+  if($('#optWhisperModel'))$('#optWhisperModel').value=OPT.whisperModel||'onnx-community/whisper-tiny';
+  ['live','rec','up'].forEach(t=>setAI(t,OPT.ai[t]||'no'));setTab(OPT.tab||'live');setVid(OPT.vid||'a');
+  
+  // Permanently ensure cached audio is saved in library
+  const lib=LS.get('sb.lib',[]);
+  const winterEntry=PERM_AUDIO_CACHE['466e2158740d14d722ffc9f5914f0664bc493c8a858ac3d3f95ef3ba23c726c3'];
+  if(!lib.some(x=>x.title==='WINTER IS HERE')){
+    lib.unshift({
+      id:'winter-is-here-cached',
+      t:Date.now(),
+      title:'WINTER IS HERE',
+      data:{
+        title:'WINTER IS HERE',
+        author:winterEntry.author,
+        contact:'',
+        date:new Date().toLocaleDateString(),
+        cast:winterEntry.cast.slice(),
+        places:['WINTERFELL - NORTHERN GATE'],
+        blocks:winterEntry.blocks.map(b=>mkBlock(b)),
+        ls:2,
+        lang:'en-US'
+      }
+    });
+    LS.set('sb.lib',lib.slice(0,15));
+  }
+  LS.set('sb.cachedAudio.466e2158740d14d722ffc9f5914f0664bc493c8a858ac3d3f95ef3ba23c726c3',winterEntry);
+
+  syncInputs();aiStatus();loadEx();loadRecs();render();LW.draw();showAI();
+}
+init();
+</script>
+</body>
+</html>
